@@ -1,0 +1,94 @@
+_schema-version: "3.2"
+ID: zsyrusdataprep
+description: Syrus Data Preparation
+version: 0.0.1
+modules:
+- name: zsyrusdataprep-destination-content
+  type: com.sap.application.content
+  requires:
+  - name: zsyrusdataprep-destination-service
+    parameters:
+      content-target: true
+  - name: zsyrusdataprep-repo-host
+    parameters:
+      service-key:
+        name: zsyrusdataprep-repo-host-key
+  - name: zsyrusdataprep-uaa
+    parameters:
+      service-key:
+        name: zsyrusdataprep-uaa-key
+  parameters:
+    content:
+      instance:
+        destinations:
+        - Name: zsyrusdataprep_html_repo_host
+          ServiceInstanceName: zsyrusdataprep-html5-service
+          ServiceKeyName: zsyrusdataprep-repo-host-key
+          sap.cloud.service: zsyrusdataprep
+        - Authentication: OAuth2UserTokenExchange
+          Name: zsyrusdataprep_uaa
+          ServiceInstanceName: zsyrusdataprep-xsuaa-service
+          ServiceKeyName: zsyrusdataprep-uaa-key
+          sap.cloud.service: zsyrusdataprep
+        existing_destinations_policy: update
+  build-parameters:
+    no-source: true
+- name: zsyrusdataprep-app-content
+  type: com.sap.application.content
+  path: .
+  requires:
+  - name: zsyrusdataprep-repo-host
+    parameters:
+      content-target: true
+  build-parameters:
+    build-result: resources
+    requires:
+    - artifacts:
+      - comlvmhapollozsyrusdataprepui.zip
+      name: comlvmhapollozsyrusdataprepui
+      target-path: resources/
+- name: comlvmhapollozsyrusdataprepui
+  type: html5
+  path: zsyrusdataprep-ui
+  build-parameters:
+    build-result: dist
+    builder: custom
+    commands:
+    - npm install
+    - npm run build:cf
+    supported-platforms: []
+resources:
+- name: zsyrusdataprep-destination-service
+  type: org.cloudfoundry.managed-service
+  parameters:
+    config:
+      HTML5Runtime_enabled: true
+      init_data:
+        instance:
+          destinations:
+          - Authentication: NoAuthentication
+            Name: ui5
+            ProxyType: Internet
+            Type: HTTP
+            URL: https://ui5.sap.com
+          existing_destinations_policy: update
+      version: 1.0.0
+    service: destination
+    service-name: zsyrusdataprep-destination-service
+    service-plan: lite
+- name: zsyrusdataprep-uaa
+  type: org.cloudfoundry.managed-service
+  parameters:
+    path: ./xs-security.json
+    service: xsuaa
+    service-name: zsyrusdataprep-xsuaa-service
+    service-plan: application
+- name: zsyrusdataprep-repo-host
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: html5-apps-repo
+    service-name: zsyrusdataprep-html5-service
+    service-plan: app-host
+parameters:
+  deploy_mode: html5-repo
+  enable-parallel-deployments: true

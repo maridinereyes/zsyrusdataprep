@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="1.0" xmlns:edmx="http://schemas.microsoft.com/ado/2007/06/edmx" xmlns:m="http://schemas.microsoft.com/ado/2007/08/dataservices/metadata" xmlns:sap="http://www.sap.com/Protocols/SAPData">
+    <edmx:DataServices m:DataServiceVersion="2.0">
+        <Schema Namespace="ZFI_SYRUS_SRV" xml:lang="en" sap:schema-version="1" xmlns="http://schemas.microsoft.com/ado/2008/09/edm">
+            <EntityType Name="Syrus" sap:content-version="1">
+                <Key>
+                    <PropertyRef Name="From_postingdate"/>
+                    <PropertyRef Name="To_postingdate"/>
+                    <PropertyRef Name="FiscalPeriod"/>
+                    <PropertyRef Name="FiscalYear"/>
+                    <PropertyRef Name="Ledger"/>
+                    <PropertyRef Name="Companycode"/>
+                    <PropertyRef Name="Glaccount"/>
+                    <PropertyRef Name="Glaccounthier"/>
+                </Key>
+                <Property Name="From_postingdate" Type="Edm.String" Nullable="false" MaxLength="20" sap:unicode="false" sap:label="From Postind Date"/>
+                <Property Name="To_postingdate" Type="Edm.String" Nullable="false" MaxLength="20" sap:unicode="false" sap:label="To Posting Date"/>
+                <Property Name="FiscalPeriod" Type="Edm.String" Nullable="false" MaxLength="3" sap:unicode="false" sap:label="Fiscal Period"/>
+                <Property Name="FiscalYear" Type="Edm.String" Nullable="false" MaxLength="4" sap:unicode="false" sap:label="Fiscal Year"/>
+                <Property Name="Ledger" Type="Edm.String" Nullable="false" MaxLength="2" sap:unicode="false" sap:label="Ledger"/>
+                <Property Name="Companycode" Type="Edm.String" Nullable="false" MaxLength="4" sap:unicode="false" sap:label="Company Code"/>
+                <Property Name="Glaccount" Type="Edm.String" Nullable="false" MaxLength="10" sap:unicode="false" sap:label="Account Number"/>
+                <Property Name="Glaccounthier" Type="Edm.String" Nullable="false" MaxLength="10" sap:unicode="false" sap:label="Account Number"/>
+                <Property Name="Postingdate" Type="Edm.String" Nullable="false" MaxLength="20" sap:unicode="false" sap:label="Posting Date"/>
+                <Property Name="Glaccountdesc" Type="Edm.String" Nullable="false" MaxLength="20" sap:unicode="false" sap:label="Short Text"/>
+                <Property Name="CorpgrpacctBefore" Type="Edm.String" Nullable="false" MaxLength="10" sap:unicode="false" sap:label="Group Account Number"/>
+                <Property Name="FintrantypeBefore" Type="Edm.String" Nullable="false" MaxLength="3" sap:unicode="false" sap:label="Transactn type"/>
+                <Property Name="TradingpartnerBefore" Type="Edm.String" Nullable="false" MaxLength="6" sap:unicode="false" sap:label="Trading Partner"/>
+                <Property Name="CorpgracctAfter" Type="Edm.String" Nullable="false" MaxLength="10" sap:unicode="false" sap:label="Group Account Number"/>
+                <Property Name="FintrantypeAfter" Type="Edm.String" Nullable="false" MaxLength="3" sap:unicode="false" sap:label="Transactn type"/>
+                <Property Name="TradingpartnerAfter" Type="Edm.String" Nullable="false" MaxLength="6" sap:unicode="false" sap:label="Trading Partner"/>
+                <Property Name="Rubtype" Type="Edm.String" Nullable="false" MaxLength="1" sap:unicode="false" sap:label="Rub Type"/>
+                <Property Name="DC" Type="Edm.String" Nullable="false" MaxLength="5" sap:unicode="false" sap:label="Currency" sap:semantics="currency-code"/>
+                <Property Name="PAmount" Type="Edm.Decimal" Nullable="false" Precision="24" Scale="3" sap:unicode="false" sap:label="End. Bal. in CC Cur"/>
+            </EntityType>
+            <EntityContainer Name="ZFI_SYRUS_SRV_Entities" m:IsDefaultEntityContainer="true" sap:supported-formats="atom json xlsx">
+                <EntitySet Name="SyrusSet" EntityType="ZFI_SYRUS_SRV.Syrus" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:pageable="false" sap:content-version="1"/>
+            </EntityContainer>
+            <Annotation Term="Core.SchemaVersion" String="1.0.0" xmlns="http://docs.oasis-open.org/odata/ns/edm"/>
+            <atom:link rel="self" href="https://da1:443/sap/opu/odata/sap/ZFI_SYRUS_SRV/$metadata" xmlns:atom="http://www.w3.org/2005/Atom"/>
+            <atom:link rel="latest-version" href="https://da1:443/sap/opu/odata/sap/ZFI_SYRUS_SRV/$metadata" xmlns:atom="http://www.w3.org/2005/Atom"/>
+        </Schema>
+    </edmx:DataServices>
+</edmx:Edmx>
