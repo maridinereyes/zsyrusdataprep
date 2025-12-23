@@ -3,44 +3,121 @@ sap.ui.define([
   "sap/ui/model/json/JSONModel",
   "sap/m/MessageBox",
   "sap/ui/core/BusyIndicator",
-  "sap/ui/core/format/DateFormat"
-], function (Controller, JSONModel, MessageBox, BusyIndicator, DateFormat) {
+  "sap/ui/core/format/DateFormat",
+  "sap/ui/comp/valuehelpdialog/ValueHelpDialog",
+  "sap/m/Token"
+], function (
+  Controller,
+  JSONModel,
+  MessageBox,
+  BusyIndicator,
+  DateFormat,
+  ValueHelpDialog,
+  Token
+) {
   "use strict";
 
   return Controller.extend("com.lvmh.apollo.zsyrusdataprepui.controller.Filters", {
 
+    /* =========================================================== */
+    /* INIT                                                       */
+    /* =========================================================== */
+
     onInit: function () {
-      // Model to control Apply button
       var oModel = new JSONModel({
         applyEnabled: false
       });
       this.getView().setModel(oModel, "reportModel");
 
-      //set default value
       var oView = this.getView();
-      const firstDayOfYear = new Date(new Date().getFullYear(), 0, 1);
-      const lastDayPrevMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 0);
-      
+      var iYear = new Date().getFullYear();
+
       oView.byId("idGLAccountHierarchy").setValue("IFRS");
-      oView.byId("idPostingDateFrom").setDateValue(firstDayOfYear);
-      oView.byId("idPostingDateTo").setDateValue(lastDayPrevMonth);
+      oView.byId("idPostingDateFrom").setDateValue(new Date(iYear, 0, 1));
+      oView.byId("idPostingDateTo").setDateValue(new Date(iYear, new Date().getMonth(), 0));
+
       this.getView().getModel("reportModel").setProperty("/applyEnabled", true);
-
-
     },
+
+    /* =========================================================== */
+    /* FILTER CHANGE                                               */
+    /* =========================================================== */
 
     onFilterChange: function () {
       var oView = this.getView();
-      var sCompanyCode = oView.byId("idCompanyCodeBox").getValue();
-      var sLedger = oView.byId("idLedgerBox").getValue();
-      var sGLHierarchy = oView.byId("idGLAccountHierarchy").getValue();
-      var dDateFrom = oView.byId("idPostingDateFrom").getDateValue();
-      var dDateTo = oView.byId("idPostingDateTo").getDateValue();
 
-      // Enable Apply button only if required fields filled
-      var bEnable = !!(sCompanyCode && sLedger && sGLHierarchy && dDateFrom && dDateTo);
+      var bEnable = !!(
+        oView.byId("idCompanyCodeBox").getValue() &&
+        oView.byId("idLedgerBox").getValue() &&
+        oView.byId("idGLAccountHierarchy").getValue() &&
+        oView.byId("idPostingDateFrom").getDateValue() &&
+        oView.byId("idPostingDateTo").getDateValue()
+      );
+
       this.getView().getModel("reportModel").setProperty("/applyEnabled", bEnable);
     },
+
+    /* =========================================================== */
+    /* GROUP ACCOUNT VALUE HELP                                    */
+    /* =========================================================== */
+
+    onGroupAccountValueHelp: function () {
+  var oView = this.getView();
+  var oMultiInput = oView.byId("idGroupAccountNumber");
+
+  // ✅ get the correct named model from manifest
+  var oGroupAccountModel = this.getOwnerComponent().getModel("ZDDL_FI_GROUPACCOUNT_CDS");
+
+  if (!oGroupAccountModel) {
+    MessageBox.error("Group Account CDS model not found in manifest.");
+    return;
+  }
+
+  if (!this._oGroupAccVHD) {
+    this._oGroupAccVHD = new ValueHelpDialog({
+      title: "Group Account",
+      supportMultiselect: true,
+      supportRanges: false,
+      key: "bilkt",
+      descriptionKey: "bilkt",
+
+      ok: function (oEvent) {
+        oMultiInput.setTokens(oEvent.getParameter("tokens"));
+        this.close();
+      },
+
+      cancel: function () {
+        this.close();
+      },
+
+      afterClose: function () {
+        this.destroy();
+        this._oGroupAccVHD = null;
+      }.bind(this)
+    });
+
+    this._oGroupAccVHD.getTableAsync().then(function (oTable) {
+
+      // ✅ THIS is the critical line
+      oTable.setModel(oGroupAccountModel);
+
+      // sap.ui.table.Table requires bindRows
+      oTable.bindRows("/ZDDL_FI_GROUPACCOUNT");
+
+      oTable.addColumn(new sap.ui.table.Column({
+        label: new sap.m.Label({ text: "Group Account Number" }),
+        template: new sap.m.Text({ text: "{bilkt}" })
+      }));
+    });
+  }
+
+  this._oGroupAccVHD.open();
+},
+
+
+    /* =========================================================== */
+    /* APPLY FILTERS                                               */
+    /* =========================================================== */
 
     onApplyFilters: function () {
       var oView = this.getView();
@@ -48,7 +125,6 @@ sap.ui.define([
       var sCompanyCode = oView.byId("idCompanyCodeBox").getValue();
       var sLedger = oView.byId("idLedgerBox").getValue();
       var sGLHierarchy = oView.byId("idGLAccountHierarchy").getValue();
-      var sGroupAccount = oView.byId("idGroupAccountNumber").getValue();
       var dDateFrom = oView.byId("idPostingDateFrom").getDateValue();
       var dDateTo = oView.byId("idPostingDateTo").getDateValue();
 
@@ -57,58 +133,67 @@ sap.ui.define([
         return;
       }
 
-      var oDateFormat = DateFormat.getDateInstance({
-        pattern: "yyyy-MM-dd"
-      });
-      var sDateFrom = oDateFormat.format(dDateFrom);
-      var sDateTo = oDateFormat.format(dDateTo);
-      var sFiscalPeriod = String(dDateFrom.getMonth() + 1).padStart(2, "0");
-      var sFiscalYear = String(dDateTo.getFullYear());
+      var aTokens = oView.byId("idGroupAccountNumber").getTokens();
+      var sGroupAccounts = aTokens.map(function (oToken) {
+        return oToken.getKey(); // bilkt
+      }).join(",");
+
+      var oDateFormat = DateFormat.getDateInstance({ pattern: "yyyy-MM-dd" });
 
       var oPayload = {
         Companycode: sCompanyCode,
         Ledger: sLedger,
         Glaccounthier: sGLHierarchy,
-        From_postingdate: sDateFrom,
-        To_postingdate: sDateTo,
-        FiscalPeriod: sFiscalPeriod,
-        FiscalYear: sFiscalYear,
-        CorpgrpacctBefore: sGroupAccount || "",
+        From_postingdate: oDateFormat.format(dDateFrom),
+        To_postingdate: oDateFormat.format(dDateTo),
+        FiscalPeriod: String(dDateFrom.getMonth() + 1).padStart(2, "0"),
+        FiscalYear: String(dDateTo.getFullYear()),
+        CorpgrpacctBefore: sGroupAccounts,
         CorpgracctAfter: ""
       };
 
       BusyIndicator.show();
+
       this.getView().getModel().create("/SyrusSet", oPayload, {
         success: function (oData, oResponse) {
           BusyIndicator.hide();
-          var oResponseMsg = JSON.parse(oResponse.headers["sap-message"]);
-          var aMessages = oResponseMsg.details;
-          if (oResponseMsg.severity === "warning"){
-            MessageBox.warning(
-              aMessages.map(function(o){ return o.message; }).join("\n")
-            );
-          }else{
-            // Success logic
-          MessageBox.success("Successfully Updated");
+
+          if (oResponse.headers && oResponse.headers["sap-message"]) {
+            var oMsg = JSON.parse(oResponse.headers["sap-message"]);
+
+            if (oMsg.severity === "warning") {
+              MessageBox.warning(
+                oMsg.details.map(function (d) {
+                  return d.message;
+                }).join("\n")
+              );
+              return;
+            }
           }
-          
-        }.bind(this),
+
+          MessageBox.success("Successfully Updated");
+        },
+
         error: function (oError) {
           BusyIndicator.hide();
-          var oResponse = JSON.parse(oError.responseText);
-          var sMessageText = oResponse.error.message.value;
-          MessageBox.error(sMessageText);
+          MessageBox.error(
+            JSON.parse(oError.responseText).error.message.value
+          );
         }
       });
-    }
-    ,
+    },
+
+    /* =========================================================== */
+    /* CLEAR FILTERS                                               */
+    /* =========================================================== */
 
     onClearFilters: function () {
       var oView = this.getView();
+
       oView.byId("idLedgerBox").setValue("GG");
       oView.byId("idCompanyCodeBox").setValue("LVMH");
       oView.byId("idGLAccountHierarchy").setValue("");
-      oView.byId("idGroupAccountNumber").setValue("");
+      oView.byId("idGroupAccountNumber").removeAllTokens();
       oView.byId("idPostingDateFrom").setDateValue(null);
       oView.byId("idPostingDateTo").setDateValue(null);
 

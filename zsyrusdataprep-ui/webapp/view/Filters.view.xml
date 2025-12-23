@@ -32,8 +32,17 @@
                     <Input id="idGLAccountHierarchy" width="15rem" liveChange="onFilterChange" />
 
                     <!-- Group Account Number -->
-                    <Label text="{i18n>groupAccountNumberLabel}" class="sapUiSmallMarginTop"/>
-                    <Input id="idGroupAccountNumber" width="15rem" liveChange="onFilterChange" />
+                  <!-- Group Account Number -->
+<Label text="{i18n>groupAccountNumberLabel}" class="sapUiSmallMarginTop"/>
+
+<MultiInput
+    id="idGroupAccountNumber"
+    width="15rem"
+    showValueHelp="true"
+    valueHelpRequest="onGroupAccountValueHelp"
+    tokenUpdate="onGroupAccountTokenUpdate"
+/>
+
 
                     <!-- Action Buttons -->
                     <HBox class="sapUiSmallMarginTop" alignItems="Center" justifyContent="Start">

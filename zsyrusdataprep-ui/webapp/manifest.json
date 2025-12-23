@@ -24,6 +24,24 @@
           "localUri": "localService/mainService/metadata.xml",
           "odataVersion": "2.0"
         }
+      },
+      "ZDDL_FI_GROUPACCOUNT_CDS_VAN": {
+        "uri": "/sap/opu/odata/IWFND/CATALOGSERVICE;v=2/Annotations(TechnicalName='ZDDL_FI_GROUPACCOUNT_CDS_VAN',Version='0001')/$value/",
+        "type": "ODataAnnotation",
+        "settings": {
+          "localUri": "localService/ZDDL_FI_GROUPACCOUNT_CDS/ZDDL_FI_GROUPACCOUNT_CDS_VAN.xml"
+        }
+      },
+      "ZDDL_FI_GROUPACCOUNT_CDS": {
+        "uri": "/sap/opu/odata/sap/ZDDL_FI_GROUPACCOUNT_CDS/",
+        "type": "OData",
+        "settings": {
+          "annotations": [
+            "ZDDL_FI_GROUPACCOUNT_CDS_VAN"
+          ],
+          "localUri": "localService/ZDDL_FI_GROUPACCOUNT_CDS/metadata.xml",
+          "odataVersion": "2.0"
+        }
       }
     }
   },
@@ -65,6 +83,11 @@
       },
       "": {
         "dataSource": "mainService",
+        "preload": true,
+        "settings": {}
+      },
+      "ZDDL_FI_GROUPACCOUNT_CDS": {
+        "dataSource": "ZDDL_FI_GROUPACCOUNT_CDS",
         "preload": true,
         "settings": {}
       }
