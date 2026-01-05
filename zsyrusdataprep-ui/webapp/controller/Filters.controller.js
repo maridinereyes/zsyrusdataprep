@@ -65,7 +65,7 @@ sap.ui.define([
   var oView = this.getView();
   var oMultiInput = oView.byId("idGroupAccountNumber");
 
-  // ✅ get the correct named model from manifest
+  
   var oGroupAccountModel = this.getOwnerComponent().getModel("ZDDL_FI_GROUPACCOUNT_CDS");
 
   if (!oGroupAccountModel) {
@@ -98,10 +98,10 @@ sap.ui.define([
 
     this._oGroupAccVHD.getTableAsync().then(function (oTable) {
 
-      // ✅ THIS is the critical line
+     
       oTable.setModel(oGroupAccountModel);
 
-      // sap.ui.table.Table requires bindRows
+     
       oTable.bindRows("/ZDDL_FI_GROUPACCOUNT");
 
       oTable.addColumn(new sap.ui.table.Column({
@@ -161,14 +161,22 @@ sap.ui.define([
           if (oResponse.headers && oResponse.headers["sap-message"]) {
             var oMsg = JSON.parse(oResponse.headers["sap-message"]);
 
-            if (oMsg.severity === "warning") {
-              MessageBox.warning(
-                oMsg.details.map(function (d) {
-                  return d.message;
-                }).join("\n")
-              );
-              return;
-            }
+           if (oMsg.severity === "warning") {
+  var aDetails = oMsg.details || [];
+  var sMessage;
+ 
+  if (aDetails.length === 1) {
+    sMessage = aDetails[0].message;
+  } else {
+    sMessage = aDetails
+      .map(function (d) {
+        return d.message;
+      })
+      .join("\n");
+  }
+ 
+  MessageBox.warning(sMessage);
+  return;}
           }
 
           MessageBox.success("Successfully Updated");
