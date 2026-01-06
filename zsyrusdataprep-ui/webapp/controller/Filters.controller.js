@@ -24,9 +24,7 @@ sap.ui.define([
     /* =========================================================== */
 
     onInit: function () {
-      var oModel = new JSONModel({
-        applyEnabled: false
-      });
+      var oModel = new JSONModel({ applyEnabled: false });
       this.getView().setModel(oModel, "reportModel");
 
       var oView = this.getView();
@@ -34,7 +32,9 @@ sap.ui.define([
 
       oView.byId("idGLAccountHierarchy").setValue("IFRS");
       oView.byId("idPostingDateFrom").setDateValue(new Date(iYear, 0, 1));
-      oView.byId("idPostingDateTo").setDateValue(new Date(iYear, new Date().getMonth(), 0));
+    
+  oView.byId("idPostingDateTo")
+    .setDateValue(new Date(iYear, 11, 31));
 
       this.getView().getModel("reportModel").setProperty("/applyEnabled", true);
     },
@@ -54,7 +54,8 @@ sap.ui.define([
         oView.byId("idPostingDateTo").getDateValue()
       );
 
-      this.getView().getModel("reportModel").setProperty("/applyEnabled", bEnable);
+      this.getView().getModel("reportModel")
+        .setProperty("/applyEnabled", bEnable);
     },
 
     /* =========================================================== */
@@ -62,58 +63,55 @@ sap.ui.define([
     /* =========================================================== */
 
     onGroupAccountValueHelp: function () {
-  var oView = this.getView();
-  var oMultiInput = oView.byId("idGroupAccountNumber");
+      var oView = this.getView();
+      var oMultiInput = oView.byId("idGroupAccountNumber");
 
-  
-  var oGroupAccountModel = this.getOwnerComponent().getModel("ZDDL_FI_GROUPACCOUNT_CDS");
+      var oGroupAccountModel =
+        this.getOwnerComponent().getModel("ZDDL_FI_GROUPACCOUNT_CDS");
 
-  if (!oGroupAccountModel) {
-    MessageBox.error("Group Account CDS model not found in manifest.");
-    return;
-  }
+      if (!oGroupAccountModel) {
+        MessageBox.error("Group Account CDS model not found in manifest.");
+        return;
+      }
 
-  if (!this._oGroupAccVHD) {
-    this._oGroupAccVHD = new ValueHelpDialog({
-      title: "Group Account",
-      supportMultiselect: true,
-      supportRanges: false,
-      key: "bilkt",
-      descriptionKey: "bilkt",
+      if (!this._oGroupAccVHD) {
+        this._oGroupAccVHD = new ValueHelpDialog({
+          title: "Group Account",
+          supportMultiselect: true,
+          supportRanges: false,
+          key: "bilkt",
+          descriptionKey: "bilkt",
 
-      ok: function (oEvent) {
-        oMultiInput.setTokens(oEvent.getParameter("tokens"));
-        this.close();
-      },
+          ok: function (oEvent) {
+            oMultiInput.setTokens(oEvent.getParameter("tokens"));
+            this.close();
+          },
 
-      cancel: function () {
-        this.close();
-      },
+          cancel: function () {
+            this.close();
+          },
 
-      afterClose: function () {
-        this.destroy();
-        this._oGroupAccVHD = null;
-      }.bind(this)
-    });
+          afterClose: function () {
+            this.destroy();
+            this._oGroupAccVHD = null;
+          }.bind(this)
+        });
 
-    this._oGroupAccVHD.getTableAsync().then(function (oTable) {
+        this._oGroupAccVHD.getTableAsync().then(function (oTable) {
+          oTable.setModel(oGroupAccountModel);
+          oTable.bindRows("/ZDDL_FI_GROUPACCOUNT");
 
-     
-      oTable.setModel(oGroupAccountModel);
+          oTable.addColumn(
+            new sap.ui.table.Column({
+              label: new sap.m.Label({ text: "Group Account Number" }),
+              template: new sap.m.Text({ text: "{bilkt}" })
+            })
+          );
+        });
+      }
 
-     
-      oTable.bindRows("/ZDDL_FI_GROUPACCOUNT");
-
-      oTable.addColumn(new sap.ui.table.Column({
-        label: new sap.m.Label({ text: "Group Account Number" }),
-        template: new sap.m.Text({ text: "{bilkt}" })
-      }));
-    });
-  }
-
-  this._oGroupAccVHD.open();
-},
-
+      this._oGroupAccVHD.open();
+    },
 
     /* =========================================================== */
     /* APPLY FILTERS                                               */
@@ -134,9 +132,11 @@ sap.ui.define([
       }
 
       var aTokens = oView.byId("idGroupAccountNumber").getTokens();
-      var sGroupAccounts = aTokens.map(function (oToken) {
-        return oToken.getKey(); // bilkt
-      }).join(",");
+      var sGroupAccounts = aTokens
+        .map(function (oToken) {
+          return oToken.getKey();
+        })
+        .join(",");
 
       var oDateFormat = DateFormat.getDateInstance({ pattern: "yyyy-MM-dd" });
 
@@ -154,40 +154,69 @@ sap.ui.define([
 
       BusyIndicator.show();
 
-      this.getView().getModel().create("/SyrusSet", oPayload, {
-        success: function (oData, oResponse) {
-          BusyIndicator.hide();
+      this._createSyrusEntry(oPayload)
+        .then(function (oResponse) {
+          if (oResponse.sapMessage &&
+              oResponse.sapMessage.severity === "warning") {
 
-          if (oResponse.headers && oResponse.headers["sap-message"]) {
-            var oMsg = JSON.parse(oResponse.headers["sap-message"]);
-
-           if (oMsg.severity === "warning") {
-  var aDetails = oMsg.details || [];
-  var sMessage;
- 
-  if (aDetails.length === 1) {
-    sMessage = aDetails[0].message;
-  } else {
-    sMessage = aDetails
-      .map(function (d) {
-        return d.message;
-      })
-      .join("\n");
-  }
- 
-  MessageBox.warning(sMessage);
-  return;}
+            MessageBox.warning(oResponse.message);
+            return;
           }
 
           MessageBox.success("Successfully Updated");
-        },
-
-        error: function (oError) {
+        })
+        .catch(function (oErrorMessage) {
+          MessageBox.error(oErrorMessage);
+        })
+        .finally(function () {
           BusyIndicator.hide();
-          MessageBox.error(
-            JSON.parse(oError.responseText).error.message.value
-          );
-        }
+        });
+    },
+
+    /* =========================================================== */
+    /* PROMISE WRAPPER FOR ODATA CREATE                            */
+    /* =========================================================== */
+
+    _createSyrusEntry: function (oPayload) {
+      var oModel = this.getView().getModel();
+
+      return new Promise(function (resolve, reject) {
+        oModel.create("/SyrusSet", oPayload, {
+          success: function (oData, oResponse) {
+            var oResult = {
+              sapMessage: null,
+              message: ""
+            };
+
+            if (oResponse.headers && oResponse.headers["sap-message"]) {
+              var oMsg = JSON.parse(oResponse.headers["sap-message"]);
+
+              if (oMsg.severity === "warning") {
+                var aDetails = oMsg.details || [];
+
+                if (aDetails.length > 0) {
+                  oResult.message = aDetails
+                    .map(function (d) {
+                      return d.message;
+                    })
+                    .join("\n");
+                } else {
+                  oResult.message = oMsg.message;
+                }
+
+                oResult.sapMessage = oMsg;
+              }
+            }
+
+            resolve(oResult);
+          },
+
+          error: function (oError) {
+            var sErrorMsg =
+              JSON.parse(oError.responseText).error.message.value;
+            reject(sErrorMsg);
+          }
+        });
       });
     },
 
@@ -205,7 +234,8 @@ sap.ui.define([
       oView.byId("idPostingDateFrom").setDateValue(null);
       oView.byId("idPostingDateTo").setDateValue(null);
 
-      this.getView().getModel("reportModel").setProperty("/applyEnabled", false);
+      this.getView().getModel("reportModel")
+        .setProperty("/applyEnabled", false);
     }
 
   });
