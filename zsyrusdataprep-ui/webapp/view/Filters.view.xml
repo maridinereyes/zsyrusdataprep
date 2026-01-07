@@ -1,59 +1,144 @@
-<mvc:View controllerName="com.lvmh.apollo.zsyrusdataprepui.controller.Filters"
+<mvc:View
+    controllerName="com.lvmh.apollo.zsyrusdataprepui.controller.Filters"
     xmlns:mvc="sap.ui.core.mvc"
     xmlns="sap.m"
-    xmlns:core="sap.ui.core">
-
-    <Page id="pageFilters" showHeader="false">
-        <VBox id="idVBoxMain" alignItems="Center" justifyContent="Center" height="100%" width="100%">
-            <Panel width="100%" class="sapmargin">
+    xmlns:core="sap.ui.core"
+>
+    <Page
+        id="pageFilters"
+        showHeader="false"
+    >
+        <VBox
+            id="idVBoxMain"
+            alignItems="Center"
+            justifyContent="Center"
+            height="100%"
+            width="100%"
+        >
+            <Panel
+                width="100%"
+                class="sapmargin"
+            >
                 <!-- Header -->
-                <Title text="{i18n>filtersTitle}" level="H2" titleStyle="H2" class="sapUiSmallMarginBegin sapUiSmallMarginTop"/>
+                <Title
+                    text="{i18n>filtersTitle}"
+                    level="H2"
+                    titleStyle="H2"
+                    class="sapUiSmallMarginBegin sapUiSmallMarginTop"
+                />
 
-                <VBox alignItems="Stretch" justifyContent="Start" width="100%">
-                    
+                <VBox
+                    alignItems="Stretch"
+                    justifyContent="Start"
+                    width="100%"
+                >
                     <!-- Ledger -->
-                    <Label text="{i18n>ledgerLabel}" required="true" class="sapUiSmallMarginTop"/>
-                    <Input id="idLedgerBox" width="15rem" value="GG" liveChange="onFilterChange" />
+                    <Label
+                        text="{i18n>ledgerLabel}"
+                        required="true"
+                        class="sapUiSmallMarginTop"
+                    />
+                    <Input
+                        id="idLedgerBox"
+                        width="15rem"
+                        value="GG"
+                        liveChange="onFilterChange"
+                    />
 
                     <!-- Company Code -->
-                    <Label text="{i18n>companyCodeLabel}" required="true" class="sapUiSmallMarginTop"/>
-                    <Input id="idCompanyCodeBox" width="15rem" value="LVMH" liveChange="onFilterChange" />
+                    <Label
+                        text="{i18n>companyCodeLabel}"
+                        required="true"
+                        class="sapUiSmallMarginTop"
+                    />
+                    <Input
+                        id="idCompanyCodeBox"
+                        width="15rem"
+                        value="LVMH"
+                        liveChange="onFilterChange"
+                    />
 
                     <!-- Posting Date From -->
-                    <Label text="{i18n>postingDateFromLabel}" required="true" class="sapUiSmallMarginTop"/>
-                    <DatePicker id="idPostingDateFrom" width="15rem" change="onFilterChange" />
+                    <Label
+                        text="{i18n>postingDateFromLabel}"
+                        required="true"
+                        class="sapUiSmallMarginTop"
+                    />
+                    <DatePicker
+                        id="idPostingDateFrom"
+                        width="15rem"
+                        change="onFilterChange"
+                    />
 
                     <!-- Posting Date To -->
-                    <Label text="{i18n>postingDateToLabel}" required="true" class="sapUiSmallMarginTop"/>
-                    <DatePicker id="idPostingDateTo" width="15rem" change="onFilterChange" />
+                    <Label
+                        text="{i18n>postingDateToLabel}"
+                        required="true"
+                        class="sapUiSmallMarginTop"
+                    />
+                    <DatePicker
+                        id="idPostingDateTo"
+                        width="15rem"
+                        change="onFilterChange"
+                    />
 
                     <!-- G/L Account Hierarchy -->
-                    <Label text="{i18n>glAccountHierarchyLabel}" required="true" class="sapUiSmallMarginTop"/>
-                    <Input id="idGLAccountHierarchy" width="15rem" liveChange="onFilterChange" />
+                    <Label
+                        text="{i18n>glAccountHierarchyLabel}"
+                        required="true"
+                        class="sapUiSmallMarginTop"
+                    />
+                    <Input
+                        id="idGLAccountHierarchy"
+                        width="15rem"
+                        liveChange="onFilterChange"
+                    />
 
                     <!-- Group Account Number -->
-                  <!-- Group Account Number -->
-<Label text="{i18n>groupAccountNumberLabel}" class="sapUiSmallMarginTop"/>
-  
+                    <!-- Group Account Number -->
+                    <Label
+                        text="{i18n>groupAccountNumberLabel}"
+                        class="sapUiSmallMarginTop"
+                    />
 
-<MultiInput
-    id="idGroupAccountNumber"
-    width="15rem"
-    showValueHelp="true"
-    valueHelpRequest="onGroupAccountValueHelp"
-    tokenUpdate="onGroupAccountTokenUpdate"
-/> 
-
+                    <MultiInput
+                        id="idGroupAccountNumber"
+                        width="15rem"
+                        showValueHelp="true"
+                        valueHelpRequest="onGroupAccountValueHelp"
+                        tokenUpdate="onGroupAccountTokenUpdate"
+                        showSuggestion="true"
+                        suggestionItems="{
+                            path:'ZDDL_FI_GROUPACCOUNT_CDS>/ZDDL_FI_GROUPACCOUNT',
+                            length: 500
+                                                                                                        }"
+                    >
+                        <suggestionItems>
+                            <core:Item
+                                text="{ZDDL_FI_GROUPACCOUNT_CDS>bilkt}"
+                                key="{ZDDL_FI_GROUPACCOUNT_CDS>bilkt}"
+                            />
+                        </suggestionItems>
+                    </MultiInput>
 
                     <!-- Action Buttons -->
-                    <HBox class="sapUiSmallMarginTop" alignItems="Center" justifyContent="Start">
-                        <Button 
-                            text="{i18n>applyFiltersButton}" 
-                            type="Emphasized" 
+                    <HBox
+                        class="sapUiSmallMarginTop"
+                        alignItems="Center"
+                        justifyContent="Start"
+                    >
+                        <Button
+                            text="{i18n>applyFiltersButton}"
+                            type="Emphasized"
                             press="onApplyFilters"
-                            enabled="{reportModel>/applyEnabled}" />
+                            enabled="{reportModel>/applyEnabled}"
+                        />
 
-                        <Button text="{i18n>clearFiltersButton}" class="sapUiTinyMarginBegin" press="onClearFilters"/>
+                        <Button
+                            text="{i18n>clearFiltersButton}"
+                            class="sapUiTinyMarginBegin"
+                            press="onClearFilters"
+                        />
                     </HBox>
                 </VBox>
             </Panel>
