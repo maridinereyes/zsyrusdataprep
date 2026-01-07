@@ -35,15 +35,15 @@
                   <!-- Group Account Number -->
 <Label text="{i18n>groupAccountNumberLabel}" class="sapUiSmallMarginTop"/>
    <!-- Group Account Number -->
-                    <Input id="idGroupAccountNumber" width="15rem" liveChange="onFilterChange" />
+                  
 
-<!--<MultiInput
+<MultiInput
     id="idGroupAccountNumber"
     width="15rem"
-    showValueHelp="true"
+    showValueHelp="false"
     valueHelpRequest="onGroupAccountValueHelp"
     tokenUpdate="onGroupAccountTokenUpdate"
-/> -->
+/> 
 
 
                     <!-- Action Buttons -->
