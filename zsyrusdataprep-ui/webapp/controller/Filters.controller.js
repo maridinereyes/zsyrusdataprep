@@ -5,7 +5,11 @@ sap.ui.define([
   "sap/ui/core/BusyIndicator",
   "sap/ui/core/format/DateFormat",
   "sap/ui/comp/valuehelpdialog/ValueHelpDialog",
-  "sap/m/Token"
+  "sap/m/Token",
+  "sap/ui/comp/filterbar/FilterBar",
+  "sap/m/SearchField",
+  "sap/ui/model/Filter",
+  "sap/ui/model/FilterOperator"
 ], function (
   Controller,
   JSONModel,
@@ -13,16 +17,19 @@ sap.ui.define([
   BusyIndicator,
   DateFormat,
   ValueHelpDialog,
-  Token
+  Token,
+  FilterBar,
+  SearchField,
+  Filter,
+  FilterOperator
 ) {
   "use strict";
 
   return Controller.extend("com.lvmh.apollo.zsyrusdataprepui.controller.Filters", {
 
     /* =========================================================== */
-    /* INIT                                                       */
+    /* INIT                                                        */
     /* =========================================================== */
-
     onInit: function () {
       var oModel = new JSONModel({ applyEnabled: false });
       this.getView().setModel(oModel, "reportModel");
@@ -32,9 +39,7 @@ sap.ui.define([
 
       oView.byId("idGLAccountHierarchy").setValue("IFRS");
       oView.byId("idPostingDateFrom").setDateValue(new Date(iYear, 0, 1));
-    
-  oView.byId("idPostingDateTo")
-    .setDateValue(new Date(iYear, 11, 31));
+      oView.byId("idPostingDateTo").setDateValue(new Date(iYear, 11, 31));
 
       this.getView().getModel("reportModel").setProperty("/applyEnabled", true);
     },
@@ -42,7 +47,6 @@ sap.ui.define([
     /* =========================================================== */
     /* FILTER CHANGE                                               */
     /* =========================================================== */
-
     onFilterChange: function () {
       var oView = this.getView();
 
@@ -54,14 +58,14 @@ sap.ui.define([
         oView.byId("idPostingDateTo").getDateValue()
       );
 
-      this.getView().getModel("reportModel")
+      this.getView()
+        .getModel("reportModel")
         .setProperty("/applyEnabled", bEnable);
     },
 
     /* =========================================================== */
-    /* GROUP ACCOUNT VALUE HELP                                    */
+    /* GROUP ACCOUNT VALUE HELP (SEARCH + LIVE COUNT)              */
     /* =========================================================== */
-
     onGroupAccountValueHelp: function () {
       var oView = this.getView();
       var oMultiInput = oView.byId("idGroupAccountNumber");
@@ -75,12 +79,47 @@ sap.ui.define([
       }
 
       if (!this._oGroupAccVHD) {
+
+        /* ================= SEARCH FIELD ================= */
+        var oSearchField = new SearchField({
+          width: "100%",
+          liveChange: function (oEvent) {
+            var sValue = oEvent.getSource().getValue();
+            var oTable = this._oGroupAccVHD.getTable();
+            var oBinding = oTable.getBinding("rows");
+
+            var aFilters = [];
+            if (sValue) {
+              aFilters.push(
+                new Filter("bilkt", FilterOperator.Contains, sValue)
+              );
+            }
+
+            oBinding.filter(aFilters);
+
+            
+            this._updateGroupAccountCount();
+          }.bind(this)
+        });
+
+        /* ================= FILTER BAR ================= */
+        var oFilterBar = new FilterBar({
+          advancedMode: false,
+          filterBarExpanded: false,
+          showGoOnFB: false,
+          useToolbar: true
+        });
+
+        oFilterBar.setBasicSearch(oSearchField);
+
+        /* ================= VALUE HELP DIALOG ================= */
         this._oGroupAccVHD = new ValueHelpDialog({
           title: "Group Account",
           supportMultiselect: true,
           supportRanges: false,
           key: "bilkt",
           descriptionKey: "bilkt",
+          filterBar: oFilterBar,
 
           ok: function (oEvent) {
             oMultiInput.setTokens(oEvent.getParameter("tokens"));
@@ -97,6 +136,7 @@ sap.ui.define([
           }.bind(this)
         });
 
+        /* ================= TABLE SETUP ================= */
         this._oGroupAccVHD.getTableAsync().then(function (oTable) {
           oTable.setModel(oGroupAccountModel);
           oTable.bindRows("/ZDDL_FI_GROUPACCOUNT");
@@ -107,16 +147,47 @@ sap.ui.define([
               template: new sap.m.Text({ text: "{bilkt}" })
             })
           );
-        });
+
+        
+          oTable.getBinding("rows").attachDataReceived(function () {
+            this._updateGroupAccountCount();
+          }.bind(this));
+
+        }.bind(this));
       }
 
       this._oGroupAccVHD.open();
+
+     
+      setTimeout(function () {
+        if (this._oGroupAccVHD) {
+          this._updateGroupAccountCount();
+        }
+      }.bind(this), 0);
+    },
+
+    /* =========================================================== */
+    /* UPDATE VALUE HELP ITEM COUNT                                */
+    /* =========================================================== */
+    _updateGroupAccountCount: function () {
+      if (!this._oGroupAccVHD) {
+        return;
+      }
+
+      var oTable = this._oGroupAccVHD.getTable();
+      var oBinding = oTable && oTable.getBinding("rows");
+
+      if (!oBinding) {
+        return;
+      }
+
+      var iCount = oBinding.getLength();
+      this._oGroupAccVHD.setTitle("Group Account (" + iCount + ")");
     },
 
     /* =========================================================== */
     /* APPLY FILTERS                                               */
     /* =========================================================== */
-
     onApplyFilters: function () {
       var oView = this.getView();
 
@@ -132,11 +203,9 @@ sap.ui.define([
       }
 
       var aTokens = oView.byId("idGroupAccountNumber").getTokens();
-      var sGroupAccounts = aTokens
-        .map(function (oToken) {
-          return oToken.getKey();
-        })
-        .join(",");
+      var sGroupAccounts = aTokens.map(function (oToken) {
+        return oToken.getKey();
+      }).join(",");
 
       var oDateFormat = DateFormat.getDateInstance({ pattern: "yyyy-MM-dd" });
 
@@ -158,11 +227,9 @@ sap.ui.define([
         .then(function (oResponse) {
           if (oResponse.sapMessage &&
               oResponse.sapMessage.severity === "warning") {
-
             MessageBox.warning(oResponse.message);
             return;
           }
-
           MessageBox.success("Successfully Updated");
         })
         .catch(function (oErrorMessage) {
@@ -174,47 +241,29 @@ sap.ui.define([
     },
 
     /* =========================================================== */
-    /* PROMISE WRAPPER FOR ODATA CREATE                            */
+    /* ODATA CREATE PROMISE                                        */
     /* =========================================================== */
-
     _createSyrusEntry: function (oPayload) {
       var oModel = this.getView().getModel();
 
       return new Promise(function (resolve, reject) {
         oModel.create("/SyrusSet", oPayload, {
           success: function (oData, oResponse) {
-            var oResult = {
-              sapMessage: null,
-              message: ""
-            };
+            var oResult = { sapMessage: null, message: "" };
 
             if (oResponse.headers && oResponse.headers["sap-message"]) {
               var oMsg = JSON.parse(oResponse.headers["sap-message"]);
-
               if (oMsg.severity === "warning") {
-                var aDetails = oMsg.details || [];
-
-                if (aDetails.length > 0) {
-                  oResult.message = aDetails
-                    .map(function (d) {
-                      return d.message;
-                    })
-                    .join("\n");
-                } else {
-                  oResult.message = oMsg.message;
-                }
-
                 oResult.sapMessage = oMsg;
+                oResult.message =
+                  (oMsg.details || []).map(d => d.message).join("\n") ||
+                  oMsg.message;
               }
             }
-
             resolve(oResult);
           },
-
           error: function (oError) {
-            var sErrorMsg =
-              JSON.parse(oError.responseText).error.message.value;
-            reject(sErrorMsg);
+            reject(JSON.parse(oError.responseText).error.message.value);
           }
         });
       });
@@ -223,7 +272,6 @@ sap.ui.define([
     /* =========================================================== */
     /* CLEAR FILTERS                                               */
     /* =========================================================== */
-
     onClearFilters: function () {
       var oView = this.getView();
 
@@ -234,7 +282,8 @@ sap.ui.define([
       oView.byId("idPostingDateFrom").setDateValue(null);
       oView.byId("idPostingDateTo").setDateValue(null);
 
-      this.getView().getModel("reportModel")
+      this.getView()
+        .getModel("reportModel")
         .setProperty("/applyEnabled", false);
     }
 
