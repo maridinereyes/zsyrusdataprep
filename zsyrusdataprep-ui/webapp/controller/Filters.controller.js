@@ -185,14 +185,14 @@ sap.ui.define([
       var oModel = this.getView().getModel();
       var sFilter = this._buildFilterString();
 
-      // URL-encode the filter to ensure GET works
+      
       var sFilterEncoded = encodeURIComponent(sFilter);
       console.log("Full GET URL:", "/SyrusSet?$filter=" + sFilterEncoded);
 
       BusyIndicator.show();
 
      oModel.read("/SyrusSet", {
-  urlParameters: { "$filter": sFilter }, // do NOT encode
+  urlParameters: { "$filter": sFilter }, 
   success: function (oData) {
     MessageBox.success("Successfully processed");
     console.log(oData);
