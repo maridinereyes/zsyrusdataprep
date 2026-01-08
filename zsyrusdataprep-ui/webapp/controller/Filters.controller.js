@@ -99,22 +99,37 @@ sap.ui.define([
 
         // VALUE HELP DIALOG
         this._oGroupAccVHD = new ValueHelpDialog({
-          title: "Group Account",
-          supportMultiselect: true,
-          supportRanges: false,
-          key: "bilkt",
-          descriptionKey: "bilkt",
-          filterBar: oFilterBar,
-          ok: function (oEvent) {
-            oMultiInput.setTokens(oEvent.getParameter("tokens"));
-            this.close();
-          },
-          cancel: function () { this.close(); },
-          afterClose: function () {
-            this.destroy();
-            this._oGroupAccVHD = null;
-          }.bind(this)
-        });
+  title: "Group Account",
+  supportMultiselect: true,
+  supportRanges: true,              
+  key: "bilkt",
+  descriptionKey: "bilkt",
+  rangeKeyFields: [               
+    {
+      label: "Group Account Number",
+      key: "bilkt",
+      type: "string"
+    }
+  ],
+  filterBar: oFilterBar,
+  ok: function (oEvent) {
+    oMultiInput.setTokens(oEvent.getParameter("tokens"));
+    this.close();
+  },
+  cancel: function () { this.close(); },
+  afterClose: function () {
+    this.destroy();
+    this._oGroupAccVHD = null;
+  }.bind(this)
+});
+
+this._oGroupAccVHD.setRangeKeyFields([
+  {
+    label: "Group Account Number",
+    key: "bilkt",
+    type: "string"
+  }
+]);
 
         // TABLE
         this._oGroupAccVHD.getTableAsync().then(function (oTable) {
@@ -166,11 +181,40 @@ sap.ui.define([
         sFilter += " and FiscalYear eq '" + dDateTo.getFullYear() + "'";
       }
 
-      var aTokens = oView.byId("idGroupAccountNumber").getTokens();
-      if (aTokens.length) {
-        var sOr = aTokens.map(function (t) { return "CorpgrpacctBefore eq '" + t.getKey() + "'"; }).join(" or ");
-        sFilter += " and (" + sOr + ")";
+     var aTokens = oView.byId("idGroupAccountNumber").getTokens();
+
+if (aTokens.length) {
+  var aConditions = [];
+
+  aTokens.forEach(function (oToken) {
+    var oRange = oToken.data && oToken.data.range;
+
+    if (oRange) {
+      // BETWEEN
+      if (oRange.operation === "BT") {
+        aConditions.push(
+          "(CorpgrpacctBefore ge '" + oRange.value1 +
+          "' and CorpgrpacctBefore le '" + oRange.value2 + "')"
+        );
       }
+
+      // EQUAL
+      if (oRange.operation === "EQ") {
+        aConditions.push(
+          "CorpgrpacctBefore eq '" + oRange.value1 + "'"
+        );
+      }
+    } else {
+      // Single value selection
+      aConditions.push(
+        "CorpgrpacctBefore eq '" + oToken.getKey() + "'"
+      );
+    }
+  });
+
+  sFilter += " and (" + aConditions.join(" or ") + ")";
+}
+
 
       console.log("===== APPLIED FILTER STRING =====");
       console.log(sFilter);
@@ -185,24 +229,74 @@ sap.ui.define([
       var oModel = this.getView().getModel();
       var sFilter = this._buildFilterString();
 
-      
+       
+  BusyIndicator.show(0);
       var sFilterEncoded = encodeURIComponent(sFilter);
       console.log("Full GET URL:", "/SyrusSet?$filter=" + sFilterEncoded);
 
-      BusyIndicator.show();
+      
 
      oModel.read("/SyrusSet", {
   urlParameters: { "$filter": sFilter }, 
-  success: function (oData) {
+ success: function (oData, oResponse) {
+
+   BusyIndicator.hide();
+
+  var oResult = {};
+  var sSapMessage = oResponse && oResponse.headers && oResponse.headers["sap-message"];
+
+  if (sSapMessage) {
+    try {
+      var oMsg = JSON.parse(sSapMessage);
+      var aDetails = oMsg.details || [];
+
+      
+      if (aDetails.length > 0) {
+        oResult.message = aDetails
+          .map(function (d) {
+            return d.message;
+          })
+          .join("\n");
+      } else {
+        oResult.message = oMsg.message;
+      }
+
+      oResult.sapMessage = oMsg;
+      // =======================================
+
+     
+      switch (oMsg.severity) {
+        case "error":
+          MessageBox.error(oResult.message);
+          break;
+        case "warning":
+          MessageBox.warning(oResult.message);
+          break;
+        case "success":
+          MessageBox.success(oResult.message);
+          break;
+        default:
+          MessageBox.information(oResult.message);
+      }
+
+    } catch (e) {
+      MessageBox.information("SAP message received but could not be parsed.");
+    }
+
+  } else {
     MessageBox.success("Successfully processed");
-    console.log(oData);
-  },
+  }
+
+  console.log("OData result:", oData);
+  console.log("SAP Message Object:", oResult.sapMessage);
+}
+,
   error: function (oError) {
     MessageBox.error(
       oError.responseText ? JSON.parse(oError.responseText).error.message.value : "Unknown error"
     );
   },
-  complete: function () { BusyIndicator.hide(); }
+  complete: function () { }
 });
     },
 
