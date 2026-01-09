@@ -228,64 +228,80 @@ if (aTokens.length) {
     onApplyFilters: function () {
       var oModel = this.getView().getModel();
       var sFilter = this._buildFilterString();
+var oBundle = this.getOwnerComponent()
+  .getModel("i18n")
+  .getResourceBundle();
+
+var sMessage = oBundle.getText("successMsginwarning");
+var sSuccessMessage = oBundle.getText("successMsgwithoutwarning");
 
        
   BusyIndicator.show(0);
       var sFilterEncoded = encodeURIComponent(sFilter);
       console.log("Full GET URL:", "/SyrusSet?$filter=" + sFilterEncoded);
-
-      
+ 
 
      oModel.read("/SyrusSet", {
   urlParameters: { "$filter": sFilter }, 
  success: function (oData, oResponse) {
+
 
    BusyIndicator.hide();
 
   var oResult = {};
   var sSapMessage = oResponse && oResponse.headers && oResponse.headers["sap-message"];
 
-  if (sSapMessage) {
-    try {
-      var oMsg = JSON.parse(sSapMessage);
-      var aDetails = oMsg.details || [];
+if (sSapMessage) {
+  try {
+    var oMsg = JSON.parse(sSapMessage);
+    var aDetails = oMsg.details || [];
 
-      
-      if (aDetails.length > 0) {
-        oResult.message = aDetails
-          .map(function (d) {
-            return d.message;
-          })
-          .join("\n");
-      } else {
-        oResult.message = oMsg.message;
-      }
+    var sBackendMsg = "";
 
-      oResult.sapMessage = oMsg;
-      // =======================================
-
-     
-      switch (oMsg.severity) {
-        case "error":
-          MessageBox.error(oResult.message);
-          break;
-        case "warning":
-          MessageBox.warning(oResult.message);
-          break;
-        case "success":
-          MessageBox.success(oResult.message);
-          break;
-        default:
-          MessageBox.information(oResult.message);
-      }
-
-    } catch (e) {
-      MessageBox.information("SAP message received but could not be parsed.");
+    if (aDetails.length > 0) {
+      sBackendMsg = aDetails
+        .map(function (d) {
+          return d.message;
+        })
+        .join("\n");
+    } else {
+      sBackendMsg = oMsg.message || "";
     }
 
-  } else {
-    MessageBox.success("Successfully processed");
+    oResult.sapMessage = oMsg;
+
+    switch (oMsg.severity) {
+      case "error":
+        MessageBox.error(sBackendMsg);
+        break;
+
+      case "warning":
+        MessageBox.warning(
+          sMessage  + "\n\n" + sBackendMsg
+        );
+        break;
+
+      case "success":
+        MessageBox.success(
+          sSuccessMessage + "\n\n" + sBackendMsg 
+        );
+        break;
+
+      default:
+        MessageBox.information(
+          sSuccessMessage + "\n\n" + sBackendMsg 
+        );
+    }
+
+  } catch (e) {
+    MessageBox.success(sSuccessMessage);
   }
+
+} else {
+  MessageBox.success(sSuccessMessage);
+}
+
+
 
   console.log("OData result:", oData);
   console.log("SAP Message Object:", oResult.sapMessage);
