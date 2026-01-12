@@ -58,6 +58,13 @@ sap.ui.define([
         .setProperty("/applyEnabled", bEnable);
     },
 
+_getText: function (sKey) {
+  return this.getOwnerComponent()
+    .getModel("i18n")
+    .getResourceBundle()
+    .getText(sKey);
+},
+
     /* =========================================================== */
     /* GROUP ACCOUNT VALUE HELP                                    */
     /* =========================================================== */
@@ -155,16 +162,20 @@ sap.ui.define([
       BusyIndicator.show();
 
       this._createSyrusEntry(oPayload)
-        .then(function (oResponse) {
-          if (oResponse.sapMessage &&
-              oResponse.sapMessage.severity === "warning") {
+       .then(function (oResponse) {
+  if (oResponse.sapMessage &&
+      oResponse.sapMessage.severity === "warning") {
 
-            MessageBox.warning(oResponse.message);
-            return;
-          }
+    var sSuccessHeader = this._getText("successMsginwarning");
+    var sFullMessage = sSuccessHeader + "\n\n" + oResponse.message;
 
-          MessageBox.success("Successfully Updated");
-        })
+    MessageBox.warning(sFullMessage);
+    return;
+  }
+
+  MessageBox.success(this._getText("successMsgwithoutwarning"));
+}.bind(this))
+
         .catch(function (oErrorMessage) {
           MessageBox.error(oErrorMessage);
         })
