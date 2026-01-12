@@ -366,7 +366,10 @@ sap.ui.define([
         if (oFilterData){
           if (oFilterData.operation === "BT") {
             aFilters.push(new Filter("CorpgrpacctBefore", FilterOperator.BT, oFilterData.value1, oFilterData.value2));
-          }else {
+          }else if (oFilterData.operation === "Empty") {
+            aFilters.push(new Filter("CorpgrpacctBefore", FilterOperator.EQ, ""));
+          }
+          else {
             aFilters.push(new Filter("CorpgrpacctBefore", oFilterData.operation, oFilterData.value1));
           }
         }else{
