@@ -7,7 +7,9 @@ sap.ui.define([
   "sap/ui/comp/valuehelpdialog/ValueHelpDialog",
   "sap/m/Token",
   "sap/ui/comp/filterbar/FilterBar",
-  "sap/m/SearchField"
+  "sap/m/SearchField",
+  "sap/ui/model/Filter",
+  "sap/ui/model/FilterOperator",
 ], function (
   Controller,
   JSONModel,
@@ -17,7 +19,9 @@ sap.ui.define([
   ValueHelpDialog,
   Token,
   FilterBar,
-  SearchField
+  SearchField,
+  Filter,
+  FilterOperator
 ) {
   "use strict";
 
@@ -99,39 +103,39 @@ sap.ui.define([
 
         // VALUE HELP DIALOG
         this._oGroupAccVHD = new ValueHelpDialog({
-  title: "Group Account",
-  supportMultiselect: true,
-  supportRanges: true,              
-  key: "bilkt",
-  descriptionKey: "bilkt",
-  rangeKeyFields: [               
-    {
-      label: "Group Account Number",
-      key: "bilkt",
-      type: "string"
-    }
-  ],
-  filterBar: oFilterBar,
-  ok: function (oEvent) {
-    oMultiInput.setTokens(oEvent.getParameter("tokens"));
-    this.close();
-  },
-  cancel: function () { this.close(); },
-  afterClose: function () {
-    this.destroy();
-    this._oGroupAccVHD = null;
-  }.bind(this)
-});
+          title: "Group Account",
+          supportMultiselect: true,
+          supportRanges: true,
+          key: "bilkt",
+          descriptionKey: "bilkt",
+          rangeKeyFields: [
+            {
+              label: "Group Account Number",
+              key: "bilkt",
+              type: "string"
+            }
+          ],
+          filterBar: oFilterBar,
+          ok: function (oEvent) {
+            oMultiInput.setTokens(oEvent.getParameter("tokens"));
+            this.close();
+          },
+          cancel: function () { this.close(); },
+          afterClose: function () {
+            this.destroy();
+            this._oGroupAccVHD = null;
+          }.bind(this)
+        });
 
-this._oGroupAccVHD.setRangeKeyFields([
-  {
-    label: "Group Account Number",
-    key: "bilkt",
-    type: "string"
-  }
-]);
+        this._oGroupAccVHD.setRangeKeyFields([
+          {
+            label: "Group Account Number",
+            key: "bilkt",
+            type: "string"
+          }
+        ]);
 
-      
+
         this._oGroupAccVHD.getTableAsync().then(function (oTable) {
           oTable.setModel(oGroupAccountModel);
           oTable.bindRows("/ZDDL_FI_GROUPACCOUNT");
@@ -169,8 +173,8 @@ this._oGroupAccVHD.setRangeKeyFields([
       var sDateTo = dDateTo ? oDateFormat.format(dDateTo) : null;
 
       var sFilter = "Companycode eq '" + oView.byId("idCompanyCodeBox").getValue() + "'" +
-                    " and Ledger eq '" + oView.byId("idLedgerBox").getValue() + "'" +
-                    " and Glaccounthier eq '" + oView.byId("idGLAccountHierarchy").getValue() + "'";
+        " and Ledger eq '" + oView.byId("idLedgerBox").getValue() + "'" +
+        " and Glaccounthier eq '" + oView.byId("idGLAccountHierarchy").getValue() + "'";
 
       if (sDateFrom) {
         sFilter += " and From_postingdate ge '" + sDateFrom + "'";
@@ -181,39 +185,39 @@ this._oGroupAccVHD.setRangeKeyFields([
         sFilter += " and FiscalYear eq '" + dDateTo.getFullYear() + "'";
       }
 
-     var aTokens = oView.byId("idGroupAccountNumber").getTokens();
+      var aTokens = oView.byId("idGroupAccountNumber").getTokens();
 
-if (aTokens.length) {
-  var aConditions = [];
+      if (aTokens.length) {
+        var aConditions = [];
 
-  aTokens.forEach(function (oToken) {
-    var oRange = oToken.data && oToken.data.range;
+        aTokens.forEach(function (oToken) {
+          var oRange = oToken.data && oToken.data.range;
 
-    if (oRange) {
-     
-      if (oRange.operation === "BT") {
-        aConditions.push(
-          "(CorpgrpacctBefore ge '" + oRange.value1 +
-          "' and CorpgrpacctBefore le '" + oRange.value2 + "')"
-        );
+          if (oRange) {
+
+            if (oRange.operation === "BT") {
+              aConditions.push(
+                "(CorpgrpacctBefore ge '" + oRange.value1 +
+                "' and CorpgrpacctBefore le '" + oRange.value2 + "')"
+              );
+            }
+
+
+            if (oRange.operation === "EQ") {
+              aConditions.push(
+                "CorpgrpacctBefore eq '" + oRange.value1 + "'"
+              );
+            }
+          } else {
+
+            aConditions.push(
+              "CorpgrpacctBefore eq '" + oToken.getKey() + "'"
+            );
+          }
+        });
+
+        sFilter += " and (" + aConditions.join(" or ") + ")";
       }
-
-     
-      if (oRange.operation === "EQ") {
-        aConditions.push(
-          "CorpgrpacctBefore eq '" + oRange.value1 + "'"
-        );
-      }
-    } else {
-      
-      aConditions.push(
-        "CorpgrpacctBefore eq '" + oToken.getKey() + "'"
-      );
-    }
-  });
-
-  sFilter += " and (" + aConditions.join(" or ") + ")";
-}
 
 
       console.log("===== APPLIED FILTER STRING =====");
@@ -225,95 +229,98 @@ if (aTokens.length) {
     /* =========================================================== */
     /* APPLY FILTERS                                               */
     /* =========================================================== */
-    onApplyFilters: function () {
+    onApplyFilters: function (oEvent) {
       var oModel = this.getView().getModel();
-      var sFilter = this._buildFilterString();
-var oBundle = this.getOwnerComponent()
-  .getModel("i18n")
-  .getResourceBundle();
+      // var sFilter = this._buildFilterString();
+      var aFilters = this._getFilters();
+      var oBundle = this.getOwnerComponent()
+        .getModel("i18n")
+        .getResourceBundle();
 
-var sMessage = oBundle.getText("successMsginwarning");
-var sSuccessMessage = oBundle.getText("successMsgwithoutwarning");
-
-       
-  BusyIndicator.show(0);
-      var sFilterEncoded = encodeURIComponent(sFilter);
-      console.log("Full GET URL:", "/SyrusSet?$filter=" + sFilterEncoded);
- 
-
-     oModel.read("/SyrusSet", {
-  urlParameters: { "$filter": sFilter }, 
- success: function (oData, oResponse) {
+      var sMessage = oBundle.getText("successMsginwarning");
+      var sSuccessMessage = oBundle.getText("successMsgwithoutwarning");
 
 
-   BusyIndicator.hide();
-
-  var oResult = {};
-  var sSapMessage = oResponse && oResponse.headers && oResponse.headers["sap-message"];
-
-if (sSapMessage) {
-  try {
-    var oMsg = JSON.parse(sSapMessage);
-    var aDetails = oMsg.details || [];
-
-    var sBackendMsg = "";
-
-    if (aDetails.length > 0) {
-      sBackendMsg = aDetails
-        .map(function (d) {
-          return d.message;
-        })
-        .join("\n");
-    } else {
-      sBackendMsg = oMsg.message || "";
-    }
-
-    oResult.sapMessage = oMsg;
-
-    switch (oMsg.severity) {
-      case "error":
-        MessageBox.error(sBackendMsg);
-        break;
-
-      case "warning":
-        MessageBox.warning(
-          sMessage  + "\n\n" + sBackendMsg
-        );
-        break;
-
-      case "success":
-        MessageBox.success(
-          sSuccessMessage + "\n\n" + sBackendMsg 
-        );
-        break;
-
-      default:
-        MessageBox.information(
-          sSuccessMessage + "\n\n" + sBackendMsg 
-        );
-    }
-
-  } catch (e) {
-    MessageBox.success(sSuccessMessage);
-  }
-
-} else {
-  MessageBox.success(sSuccessMessage);
-}
+      BusyIndicator.show(0);
+      // var sFilterEncoded = encodeURIComponent(sFilter);
+      // console.log("Full GET URL:", "/SyrusSet?$filter=" + sFilterEncoded);
 
 
+      oModel.read("/SyrusSet", {
+        // urlParameters: { "$filter": sFilter },
+        filters: aFilters,
+        success: function (oData, oResponse) {
 
-  console.log("OData result:", oData);
-  console.log("SAP Message Object:", oResult.sapMessage);
-}
-,
-  error: function (oError) {
-    MessageBox.error(
-      oError.responseText ? JSON.parse(oError.responseText).error.message.value : "Unknown error"
-    );
-  },
-  complete: function () { }
-});
+
+          BusyIndicator.hide();
+
+          var oResult = {};
+          var sSapMessage = oResponse && oResponse.headers && oResponse.headers["sap-message"];
+
+          if (sSapMessage) {
+            try {
+              var oMsg = JSON.parse(sSapMessage);
+              var aDetails = oMsg.details || [];
+
+              var sBackendMsg = "";
+
+              if (aDetails.length > 0) {
+                sBackendMsg = aDetails
+                  .map(function (d) {
+                    return d.message;
+                  })
+                  .join("\n");
+              } else {
+                sBackendMsg = oMsg.message || "";
+              }
+
+              oResult.sapMessage = oMsg;
+
+              switch (oMsg.severity) {
+                case "error":
+                  MessageBox.error(sBackendMsg);
+                  break;
+
+                case "warning":
+                  MessageBox.warning(
+                    sMessage + "\n\n" + sBackendMsg
+                  );
+                  break;
+
+                case "success":
+                  MessageBox.success(
+                    sSuccessMessage + "\n\n" + sBackendMsg
+                  );
+                  break;
+
+                default:
+                  MessageBox.information(
+                    sSuccessMessage + "\n\n" + sBackendMsg
+                  );
+              }
+
+            } catch (e) {
+              MessageBox.success(sSuccessMessage);
+            }
+
+          } else {
+            MessageBox.success(sSuccessMessage);
+          }
+
+
+
+          console.log("OData result:", oData);
+          console.log("SAP Message Object:", oResult.sapMessage);
+        }
+        ,
+        error: function (oError) {
+          BusyIndicator.hide();
+          MessageBox.error(
+            oError.responseText ? JSON.parse(oError.responseText).error.message.value : "Unknown error"
+          );
+        },
+        complete: function () { }
+      });
     },
 
     /* =========================================================== */
@@ -328,6 +335,46 @@ if (sSapMessage) {
       oView.byId("idPostingDateFrom").setDateValue(null);
       oView.byId("idPostingDateTo").setDateValue(null);
       oView.getModel("reportModel").setProperty("/applyEnabled", false);
+    },
+
+    _getFilters : function (){
+      var oView = this.getView();
+      var sLedger = oView.byId("idLedgerBox").getValue();
+      var sCompanyCode = oView.byId("idCompanyCodeBox").getValue();
+      var sGLAccountHier = oView.byId("idGLAccountHierarchy").getValue();
+      var dDateFrom = oView.byId("idPostingDateFrom").getDateValue();
+      var dDateTo = oView.byId("idPostingDateTo").getDateValue();
+      var oDateFormat = DateFormat.getDateInstance({ pattern: "yyyy-MM-dd" });
+      var sDateFrom = dDateFrom ? oDateFormat.format(dDateFrom) : null;
+      var sDateTo = dDateTo ? oDateFormat.format(dDateTo) : null;
+      var sFiscalPeriod = String(dDateFrom.getMonth() + 1).padStart(2, "0");
+      var sFiscalYear = dDateTo.getFullYear();
+      var aAccountGroup = oView.byId("idGroupAccountNumber").getTokens();
+      var aFilters = [
+        new Filter("Ledger", FilterOperator.EQ, sLedger),
+        new Filter("Companycode", FilterOperator.EQ, sCompanyCode),
+        new Filter("Glaccounthier", FilterOperator.EQ, sGLAccountHier),
+        new Filter("From_postingdate", FilterOperator.GE, sDateFrom),
+        new Filter("To_postingdate", FilterOperator.LE, sDateTo),
+        new Filter("FiscalPeriod", FilterOperator.LE, sFiscalPeriod),
+        new Filter("FiscalYear", FilterOperator.LE, sFiscalYear),
+      ];
+
+      for (var i = 0; i < aAccountGroup.length; i++) {
+        var oToken = aAccountGroup[i];
+        var oFilterData = oToken.data('range');
+        if (oFilterData){
+          if (oFilterData.operation === "BT") {
+            aFilters.push(new Filter("CorpgrpacctBefore", FilterOperator.BT, oFilterData.value1, oFilterData.value2));
+          }else {
+            aFilters.push(new Filter("CorpgrpacctBefore", oFilterData.operation, oFilterData.value1));
+          }
+        }else{
+          aFilters.push(new Filter("CorpgrpacctBefore", FilterOperator.EQ, oToken.getKey()));
+        }
+      }
+
+      return aFilters;
     }
 
   });
