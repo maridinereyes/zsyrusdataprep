@@ -131,7 +131,7 @@ this._oGroupAccVHD.setRangeKeyFields([
   }
 ]);
 
-        // TABLE
+      
         this._oGroupAccVHD.getTableAsync().then(function (oTable) {
           oTable.setModel(oGroupAccountModel);
           oTable.bindRows("/ZDDL_FI_GROUPACCOUNT");
@@ -190,7 +190,7 @@ if (aTokens.length) {
     var oRange = oToken.data && oToken.data.range;
 
     if (oRange) {
-      // BETWEEN
+     
       if (oRange.operation === "BT") {
         aConditions.push(
           "(CorpgrpacctBefore ge '" + oRange.value1 +
@@ -198,14 +198,14 @@ if (aTokens.length) {
         );
       }
 
-      // EQUAL
+     
       if (oRange.operation === "EQ") {
         aConditions.push(
           "CorpgrpacctBefore eq '" + oRange.value1 + "'"
         );
       }
     } else {
-      // Single value selection
+      
       aConditions.push(
         "CorpgrpacctBefore eq '" + oToken.getKey() + "'"
       );
