@@ -364,16 +364,24 @@ sap.ui.define([
         var oToken = aAccountGroup[i];
         var oFilterData = oToken.data('range');
         if (oFilterData){
+          var sCommonOperator = FilterOperator.EQ;
+          if (oFilterData.exclude) {
+            sCommonOperator = FilterOperator.NE;
+          }
           if (oFilterData.operation === "BT") {
             aFilters.push(new Filter("CorpgrpacctBefore", FilterOperator.BT, oFilterData.value1, oFilterData.value2));
           }else if (oFilterData.operation === "Empty") {
-            aFilters.push(new Filter("CorpgrpacctBefore", FilterOperator.EQ, ""));
+            aFilters.push(new Filter("CorpgrpacctBefore", sCommonOperator, ""));
           }
           else {
-            aFilters.push(new Filter("CorpgrpacctBefore", oFilterData.operation, oFilterData.value1));
+            if (oFilterData.exclude && oFilterData.operation === FilterOperator.EQ) {
+              aFilters.push(new Filter("CorpgrpacctBefore", FilterOperator.NE, oFilterData.value1));
+            }else {
+              aFilters.push(new Filter("CorpgrpacctBefore", oFilterData.operation, oFilterData.value1));
+            }
           }
         }else{
-          aFilters.push(new Filter("CorpgrpacctBefore", FilterOperator.EQ, oToken.getKey()));
+          aFilters.push(new Filter("CorpgrpacctBefore", sCommonOperator, oToken.getKey()));
         }
       }
 
