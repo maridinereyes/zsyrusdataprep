@@ -363,8 +363,9 @@ sap.ui.define([
       for (var i = 0; i < aAccountGroup.length; i++) {
         var oToken = aAccountGroup[i];
         var oFilterData = oToken.data('range');
+        var sCommonOperator = FilterOperator.EQ;
         if (oFilterData){
-          var sCommonOperator = FilterOperator.EQ;
+          
           if (oFilterData.exclude) {
             sCommonOperator = FilterOperator.NE;
           }
