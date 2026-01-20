@@ -43,6 +43,20 @@
           "odataVersion": "2.0"
         }
       }
+    },
+    "crossNavigation": {
+      "inbounds": {
+        "ZSYRUS-create": {
+          "semanticObject": "ZSYRUS",
+          "action": "create",
+          "title": "{{ZSYRUS-create.flpTitle}}",
+          "subTitle": "{{ZSYRUS-create.flpSubtitle}}",
+          "signature": {
+            "parameters": {},
+            "additionalParameters": "allowed"
+          }
+        }
+      }
     }
   },
   "sap.ui": {

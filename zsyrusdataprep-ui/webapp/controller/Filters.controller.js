@@ -340,7 +340,7 @@ sap.ui.define([
     _getFilters : function (){
       var oView = this.getView();
       var sLedger = oView.byId("idLedgerBox").getValue();
-      var sCompanyCode = oView.byId("idCompanyCodeBox").getValue();
+      var sCompanyCode = oView.byId("idCompanyCodeBox").getValue().toUpperCase();
       var sGLAccountHier = oView.byId("idGLAccountHierarchy").getValue();
       var dDateFrom = oView.byId("idPostingDateFrom").getDateValue();
       var dDateTo = oView.byId("idPostingDateTo").getDateValue();
