@@ -20,12 +20,18 @@
                 class="sapmargin"
             >
                 <!-- Header -->
-                <Title
-                    text="{i18n>filtersTitle}"
-                    level="H2"
-                    titleStyle="H2"
-                    class="sapUiSmallMarginBegin sapUiSmallMarginTop"
-                />
+               <HBox alignItems="Center" justifyContent="SpaceBetween" class="sapUiSmallMargin">
+    <Title
+        text="{i18n>filtersTitle}"
+        level="H2"
+        titleStyle="H2"
+    />
+    <vm:VariantManagement 
+        id="idVariantManagement" 
+        save="onSaveVariant" 
+        select="onSelectVariant"
+        xmlns:vm="sap.ui.comp.variants" />
+</HBox>
 
                 <VBox
                     alignItems="Stretch"

@@ -42,6 +42,7 @@ sap.ui.define([
       oView.byId("idPostingDateTo").setDateValue(new Date(iYear, 11, 31));
 
       oView.getModel("reportModel").setProperty("/applyEnabled", true);
+      this._mSavedVariants = {};
     },
 
     /* =========================================================== */
@@ -242,12 +243,11 @@ sap.ui.define([
 
 
       BusyIndicator.show(0);
-      // var sFilterEncoded = encodeURIComponent(sFilter);
-      // console.log("Full GET URL:", "/SyrusSet?$filter=" + sFilterEncoded);
+     
 
 
       oModel.read("/SyrusSet", {
-        // urlParameters: { "$filter": sFilter },
+        
         filters: aFilters,
         success: function (oData, oResponse) {
 
@@ -322,7 +322,82 @@ sap.ui.define([
         complete: function () { }
       });
     },
+// Helper to get all current UI values in a JSON object
+_getCurrentVariantData: function () {
+    var oView = this.getView();
+    return {
+        ledger: oView.byId("idLedgerBox").getValue(),
+        companyCode: oView.byId("idCompanyCodeBox").getValue(),
+        glHier: oView.byId("idGLAccountHierarchy").getValue(),
+        dateFrom: oView.byId("idPostingDateFrom").getDateValue(),
+        dateTo: oView.byId("idPostingDateTo").getDateValue(),
+        // Map tokens to a simple array of objects
+        groupAccounts: oView.byId("idGroupAccountNumber").getTokens().map(function (oToken) {
+            return {
+                key: oToken.getKey(),
+                text: oToken.getText(),
+                rangeData: oToken.data("range") // Important for BT/Exclude logic
+            };
+        })
+    };
+},
 
+// Helper to set UI values from a saved JSON object
+_applyVariantData: function (oData) {
+    var oView = this.getView();
+    oView.byId("idLedgerBox").setValue(oData.ledger);
+    oView.byId("idCompanyCodeBox").setValue(oData.companyCode);
+    oView.byId("idGLAccountHierarchy").setValue(oData.glHier);
+    oView.byId("idPostingDateFrom").setDateValue(oData.dateFrom ? new Date(oData.dateFrom) : null);
+    oView.byId("idPostingDateTo").setDateValue(oData.dateTo ? new Date(oData.dateTo) : null);
+
+    var oMultiInput = oView.byId("idGroupAccountNumber");
+    oMultiInput.removeAllTokens();
+    oData.groupAccounts.forEach(function (item) {
+        var oToken = new Token({ key: item.key, text: item.text });
+        if (item.rangeData) {
+            oToken.data("range", item.rangeData);
+        }
+        oMultiInput.addToken(oToken);
+    });
+    
+    this.onFilterChange(); 
+},
+onSaveVariant: function (oEvent) {
+    var oVM = oEvent.getSource();
+    var sName = oEvent.getParameter("name");
+    var sKey = oEvent.getParameter("key"); 
+    var bOverwrite = oEvent.getParameter("overwrite");
+
+    
+    var oCurrentValues = this._getCurrentVariantData();
+
+    this._mSavedVariants[sKey] = {
+        name: sName,
+        data: oCurrentValues
+    };
+
+  
+    oVM.setInitialSelectionKey(sKey);
+    
+ 
+    localStorage.setItem("mySyrusVariants", JSON.stringify(this._mSavedVariants));
+
+    sap.m.MessageToast.show("Variant '" + sName + "' saved successfully.");
+},
+
+onSelectVariant: function (oEvent) {
+    var sKey = oEvent.getParameter("key");
+    var oVariant = this._mSavedVariants[sKey];
+
+    if (oVariant && oVariant.data) {
+        this._applyVariantData(oVariant.data);
+        sap.m.MessageToast.show("Variant '" + oVariant.name + "' applied.");
+    } else {
+        
+        this.onClearFilters();
+    }
+},
     /* =========================================================== */
     /* CLEAR FILTERS                                               */
     /* =========================================================== */
@@ -339,9 +414,9 @@ sap.ui.define([
 
     _getFilters : function (){
       var oView = this.getView();
-      var sLedger = oView.byId("idLedgerBox").getValue();
+      var sLedger = oView.byId("idLedgerBox").getValue().toUpperCase();
       var sCompanyCode = oView.byId("idCompanyCodeBox").getValue().toUpperCase();
-      var sGLAccountHier = oView.byId("idGLAccountHierarchy").getValue();
+      var sGLAccountHier = oView.byId("idGLAccountHierarchy").getValue().toUpperCase();
       var dDateFrom = oView.byId("idPostingDateFrom").getDateValue();
       var dDateTo = oView.byId("idPostingDateTo").getDateValue();
       var oDateFormat = DateFormat.getDateInstance({ pattern: "yyyy-MM-dd" });
