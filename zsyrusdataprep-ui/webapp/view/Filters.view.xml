@@ -20,30 +20,32 @@
                 class="sapmargin"
             >
                 <!-- Header -->
-             <VBox class="sapUiSmallMargin" alignItems="Center">
-    <Title
-        text="{i18n>filtersTitle}"
-        level="H2"
-        titleStyle="H2"
-    />
-     <VBox  alignItems="Center">
-                 <vm:VariantManagement
-        id="idVariantManagement"
-        showExecuteOnSelection="false"
-        save="onSaveVariant"
-        select="onSelectVariant"
-        manage="onManageVariants"
-        xmlns:vm="sap.ui.comp.variants"
-    />
-    </VBox>
-</VBox>
+                <VBox
+                    class="sapUiSmallMargin"
+                    alignItems="Center"
+                >
+                    <Title
+                        text="{i18n>filtersTitle}"
+                        level="H2"
+                        titleStyle="H2"
+                    />
+                    <VBox alignItems="Center">
+                        <vm:VariantManagement
+                            id="idVariantManagement"
+                            showExecuteOnSelection="false"
+                            save="onSaveVariant"
+                            select="onSelectVariant"
+                            manage="onManageVariants"
+                            xmlns:vm="sap.ui.comp.variants"
+                        />
+                    </VBox>
+                </VBox>
 
                 <VBox
                     alignItems="Stretch"
                     justifyContent="Start"
                     width="100%"
                 >
-               
                     <!-- Ledger -->
                     <Label
                         text="{i18n>ledgerLabel}"
@@ -58,26 +60,26 @@
                     />
 
                     <!-- Company Code -->
-                  <Label
-    text="{i18n>companyCodeLabel}"
-    required="true"
-    class="sapUiSmallMarginTop"
-/>
+                    <Label
+                        text="{i18n>companyCodeLabel}"
+                        required="true"
+                        class="sapUiSmallMarginTop"
+                    />
 
-<ComboBox
-    id="idCompanyCodeBox"
-    width="15rem"
-    selectedKey="{viewModel>/companyCode}"
-    items="{
+                    <ComboBox
+                        id="idCompanyCodeBox"
+                        width="15rem"
+                        selectedKey="{viewModel>/companyCode}"
+                        items="{
         path: 'ZCSM_USER>/ZCSM_C_CompanyCodeVH'
     }"
-    selectionChange="onFilterChange"
->
-    <core:Item
-        key="{ZCSM_USER>CompanyCode}"
-        text="{ZCSM_USER>CompanyCode}"
-    />
-</ComboBox>
+                        selectionChange="onFilterChange"
+                    >
+                        <core:Item
+                            key="{ZCSM_USER>CompanyCode}"
+                            text="{ZCSM_USER>CompanyCode}"
+                        />
+                    </ComboBox>
 
                     <!-- Posting Date From -->
                     <Label
