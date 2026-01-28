@@ -40,6 +40,11 @@ server:
             authenticationType: BasicAuthentication
             destination: S4HANA_OnPrem_200
             path: /sap/opu/odata/sap/ZDDL_FI_GROUPACCOUNT_CDS/
+          - url: http://da1:443
+            client: '200'
+            authenticationType: BasicAuthentication
+            destination: S4HANA_OnPrem_200
+            path: /sap/opu/odata/sap/ZCSM_USER/
     - name: sap-fe-mockserver
       beforeMiddleware: csp
       configuration:
@@ -53,6 +58,12 @@ server:
             metadataPath: ./webapp/localService/ZDDL_FI_GROUPACCOUNT_CDS/metadata.xml
             mockdataPath: ./webapp/localService/ZDDL_FI_GROUPACCOUNT_CDS/data
             generateMockData: true
+          - urlPath: /sap/opu/odata/sap/ZCSM_USER
+            metadataPath: ./webapp/localService/ZCSM_USER/metadata.xml
+            mockdataPath: ./webapp/localService/ZCSM_USER/data
+            generateMockData: true
         annotations:
           - localPath: ./webapp/localService/ZDDL_FI_GROUPACCOUNT_CDS/ZDDL_FI_GROUPACCOUNT_CDS_VAN.xml
             urlPath: /sap/opu/odata/IWFND/CATALOGSERVICE;v=2/Annotations(TechnicalName='ZDDL_FI_GROUPACCOUNT_CDS_VAN',Version='0001')/$value/
+          - localPath: ./webapp/localService/ZCSM_USER/ZCSM_USER_VAN.xml
+            urlPath: /sap/opu/odata/IWFND/CATALOGSERVICE;v=2/Annotations(TechnicalName='ZCSM_USER_VAN',Version='0001')/$value/

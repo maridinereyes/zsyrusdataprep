@@ -58,17 +58,26 @@
                     />
 
                     <!-- Company Code -->
-                    <Label
-                        text="{i18n>companyCodeLabel}"
-                        required="true"
-                        class="sapUiSmallMarginTop"
-                    />
-                    <Input
-                        id="idCompanyCodeBox"
-                        width="15rem"
-                        value="LVMH"
-                        liveChange="onFilterChange"
-                    />
+                  <Label
+    text="{i18n>companyCodeLabel}"
+    required="true"
+    class="sapUiSmallMarginTop"
+/>
+
+<ComboBox
+    id="idCompanyCodeBox"
+    width="15rem"
+    selectedKey="{viewModel>/companyCode}"
+    items="{
+        path: 'ZCSM_USER>/ZCSM_C_CompanyCodeVH'
+    }"
+    selectionChange="onFilterChange"
+>
+    <core:Item
+        key="{ZCSM_USER>CompanyCode}"
+        text="{ZCSM_USER>CompanyCode}"
+    />
+</ComboBox>
 
                     <!-- Posting Date From -->
                     <Label
@@ -106,7 +115,6 @@
                         liveChange="onFilterChange"
                     />
 
-                    <!-- Group Account Number -->
                     <!-- Group Account Number -->
                     <Label
                         text="{i18n>groupAccountNumberLabel}"

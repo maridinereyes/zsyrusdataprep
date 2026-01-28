@@ -42,6 +42,24 @@
           "localUri": "localService/ZDDL_FI_GROUPACCOUNT_CDS/metadata.xml",
           "odataVersion": "2.0"
         }
+      },
+      "ZCSM_USER_VAN": {
+        "uri": "/sap/opu/odata/IWFND/CATALOGSERVICE;v=2/Annotations(TechnicalName='ZCSM_USER_VAN',Version='0001')/$value/",
+        "type": "ODataAnnotation",
+        "settings": {
+          "localUri": "localService/ZCSM_USER/ZCSM_USER_VAN.xml"
+        }
+      },
+      "ZCSM_USER": {
+        "uri": "/sap/opu/odata/sap/ZCSM_USER/",
+        "type": "OData",
+        "settings": {
+          "annotations": [
+            "ZCSM_USER_VAN"
+          ],
+          "localUri": "localService/ZCSM_USER/metadata.xml",
+          "odataVersion": "2.0"
+        }
       }
     },
     "crossNavigation": {
@@ -102,6 +120,11 @@
       },
       "ZDDL_FI_GROUPACCOUNT_CDS": {
         "dataSource": "ZDDL_FI_GROUPACCOUNT_CDS",
+        "preload": true,
+        "settings": {}
+      },
+      "ZCSM_USER": {
+        "dataSource": "ZCSM_USER",
         "preload": true,
         "settings": {}
       }

@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+    <edmx:Reference Uri="../../catalogservice;v=2/Vocabularies(TechnicalName='%2FIWBEP%2FVOC_COMMON',Version='0001',SAP__Origin='')/$value">
+        <edmx:Include Namespace="com.sap.vocabularies.Common.v1" Alias="Common"/>
+    </edmx:Reference>
+    <edmx:Reference Uri="../../catalogservice;v=2/Vocabularies(TechnicalName='%2FIWBEP%2FVOC_UI',Version='0001',SAP__Origin='')/$value">
+        <edmx:Include Namespace="com.sap.vocabularies.UI.v1" Alias="UI"/>
+    </edmx:Reference>
+    <edmx:Reference Uri="../../catalogservice;v=2/Vocabularies(TechnicalName='%2FIWBEP%2FVOC_COMMUNICATION',Version='0001',SAP__Origin='')/$value">
+        <edmx:Include Namespace="com.sap.vocabularies.Communication.v1" Alias="Communication"/>
+    </edmx:Reference>
+    <edmx:Reference Uri="../../catalogservice;v=2/Vocabularies(TechnicalName='%2FIWBEP%2FVOC_PERSONALDATA',Version='0001',SAP__Origin='')/$value">
+        <edmx:Include Namespace="com.sap.vocabularies.PersonalData.v1" Alias="PersonalData"/>
+    </edmx:Reference>
+    <edmx:Reference Uri="../../catalogservice;v=2/Vocabularies(TechnicalName='%2FIWBEP%2FVOC_VALIDATION',Version='0001',SAP__Origin='')/$value">
+        <edmx:Include Namespace="Org.OData.Validation.V1" Alias="Validation"/>
+    </edmx:Reference>
+    <edmx:Reference Uri="../../catalogservice;v=2/Vocabularies(TechnicalName='%2FIWBEP%2FVOC_ANALYTICS',Version='0001',SAP__Origin='')/$value">
+        <edmx:Include Namespace="com.sap.vocabularies.Analytics.v1" Alias="Analytics"/>
+    </edmx:Reference>
+    <edmx:Reference Uri="../../catalogservice;v=2/Vocabularies(TechnicalName='%2FIWBEP%2FVOC_HTML5',Version='0001',SAP__Origin='')/$value">
+        <edmx:Include Namespace="com.sap.vocabularies.HTML5.v1" Alias="HTML5"/>
+    </edmx:Reference>
+    <edmx:Reference Uri="../../../sap/zcsm_user/$metadata">
+        <edmx:Include Namespace="ZCSM_USER" Alias="SAP"/>
+    </edmx:Reference>
+    <edmx:DataServices>
+        <Schema Namespace="zcsm_user_van.v1" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+            <Annotations Target="cds_zcsm_user.C_BusinessPartnerCatHelpVhTempType/BusinessPartnerCategory">
+                <Annotation Term="UI.HiddenFilter"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.C_BusinessPartnerCatHelpVhTempType/BusinessPartnerCategory_Text">
+                <Annotation Term="UI.HiddenFilter"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.I_BusinessPartnerVHType/BusinessPartnerName">
+                <Annotation Term="UI.HiddenFilter"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.I_BusinessPartnerVHType/FormOfAddress">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.I_BusinessPartnerVHType/AuthorizationGroup">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.I_BusinessPartnerVHType/IsBusinessPurposeCompleted">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.I_BusinessPartnerVHType/DataControllerSet">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.I_BusinessPartnerVHType/DataController1">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.I_BusinessPartnerVHType/DataController2">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.I_BusinessPartnerVHType/DataController3">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.I_BusinessPartnerVHType/DataController4">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.I_BusinessPartnerVHType/DataController5">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.I_BusinessPartnerVHType/DataController6">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.I_BusinessPartnerVHType/DataController7">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.I_BusinessPartnerVHType/DataController8">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.I_BusinessPartnerVHType/DataController9">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.I_BusinessPartnerVHType/DataController10">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.I_BusinessPartnerVHType">
+                <Annotation Term="UI.LineItem">
+                    <Collection>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BusinessPartner"/>
+                            <Annotation Term="UI.Importance" EnumMember="UI.ImportanceType/High"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="FormOfAddressName"/>
+                            <Annotation Term="UI.Importance" EnumMember="UI.ImportanceType/High"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BusinessPartnerName"/>
+                            <Annotation Term="UI.Importance" EnumMember="UI.ImportanceType/High"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BusinessPartnerCategory"/>
+                            <Annotation Term="UI.Importance" EnumMember="UI.ImportanceType/High"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BusinessPartnerIDByExtSystem"/>
+                            <Annotation Term="UI.Importance" EnumMember="UI.ImportanceType/High"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="FirstName"/>
+                            <Annotation Term="UI.Importance" EnumMember="UI.ImportanceType/High"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="LastName"/>
+                            <Annotation Term="UI.Importance" EnumMember="UI.ImportanceType/High"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="OrganizationBPName1"/>
+                            <Annotation Term="UI.Importance" EnumMember="UI.ImportanceType/High"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="GroupBusinessPartnerName1"/>
+                            <Annotation Term="UI.Importance" EnumMember="UI.ImportanceType/High"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BirthDate"/>
+                            <Annotation Term="UI.Importance" EnumMember="UI.ImportanceType/High"/>
+                        </Record>
+                    </Collection>
+                </Annotation>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.ZCSM_C_BusinessPartnerVHType/BusinessPartnerName">
+                <Annotation Term="UI.HiddenFilter"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.ZCSM_C_BusinessPartnerVHType/TypeName">
+                <Annotation Term="UI.HiddenFilter"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.ZCSM_C_BusinessPartnerVHType/AuthorizationGroup">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.ZCSM_C_BusinessPartnerVHType/IsBusinessPurposeCompleted">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.ZCSM_C_BusinessPartnerVHType/DataControllerSet">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.ZCSM_C_BusinessPartnerVHType/DataController1">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.ZCSM_C_BusinessPartnerVHType/DataController2">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.ZCSM_C_BusinessPartnerVHType/DataController3">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.ZCSM_C_BusinessPartnerVHType/DataController4">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.ZCSM_C_BusinessPartnerVHType/DataController5">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.ZCSM_C_BusinessPartnerVHType/DataController6">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.ZCSM_C_BusinessPartnerVHType/DataController7">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.ZCSM_C_BusinessPartnerVHType/DataController8">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.ZCSM_C_BusinessPartnerVHType/DataController9">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.ZCSM_C_BusinessPartnerVHType/DataController10">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.ZCSM_C_CompanyCodeVHType/CompanyCurrency">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.ZCSM_C_CompanyCodeVHType/ContactName">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.ZCSM_C_CompanyCodeVHType/IsGeneralSector">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.ZCSM_C_CompanyCodeVHType/SortIndex">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.ZCSM_C_CompanyCodeVHType/Customer">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.ZCSM_C_CompanyCodeVHType/Country">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.ZCSM_C_CompanyCodeVHType">
+                <Annotation Term="UI.HeaderInfo">
+                    <Record>
+                        <PropertyValue Property="TypeName" String="Company"/>
+                        <PropertyValue Property="TypeNamePlural" String="Company"/>
+                        <PropertyValue Property="Title">
+                            <Record Type="UI.DataField">
+                                <PropertyValue Property="Label" String="Company"/>
+                            </Record>
+                        </PropertyValue>
+                    </Record>
+                </Annotation>
+                <Annotation Term="UI.PresentationVariant">
+                    <Record>
+                        <PropertyValue Property="SortOrder">
+                            <Collection>
+                                <Record Type="Common.SortOrderType">
+                                    <PropertyValue Property="Property" PropertyPath="CompanyCode"/>
+                                    <PropertyValue Property="Descending" Bool="false"/>
+                                </Record>
+                                <Record Type="Common.SortOrderType">
+                                    <PropertyValue Property="Property" PropertyPath="SortIndex"/>
+                                    <PropertyValue Property="Descending" Bool="true"/>
+                                </Record>
+                            </Collection>
+                        </PropertyValue>
+                    </Record>
+                </Annotation>
+                <Annotation Term="UI.TextArrangement" EnumMember="UI.TextArrangementType/TextLast"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.ZCSM_C_CostCenterVHType/ControllingArea">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.ZCSM_C_CustomerForCompVHType/AuthorizationGroup">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.ZCSM_C_CustomerForCompVHType/CustomerAccountGroup">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.ZCSM_C_OFFSETTINGACCOUNTVHType">
+                <Annotation Term="UI.HeaderInfo">
+                    <Record>
+                        <PropertyValue Property="TypeName" String="OffsettingAccount"/>
+                        <PropertyValue Property="TypeNamePlural" String="OffsettingAccounts"/>
+                    </Record>
+                </Annotation>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.ZCSM_C_PaymentMethodVHType">
+                <Annotation Term="UI.TextArrangement" EnumMember="UI.TextArrangementType/TextLast"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.ZCSM_C_PaymentReferenceVHType">
+                <Annotation Term="UI.TextArrangement" EnumMember="UI.TextArrangementType/TextLast"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.ZCSM_C_ProdForCompVHType/ktgrm">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.ZCSM_C_ProfitCenterAllVHType/ControllingArea">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.ZCSM_C_ProfitCenterAllVHType/ForAllProfitCenter">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.ZCSM_C_ProfitCenterAllVHType">
+                <Annotation Term="UI.LineItem">
+                    <Collection>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="ProfitCenter"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="ControllingArea"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="ValidityEndDate"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="ProfitCenterName"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="ValidityStartDate"/>
+                        </Record>
+                    </Collection>
+                </Annotation>
+                <Annotation Term="UI.TextArrangement" EnumMember="UI.TextArrangementType/TextLast"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.ZCSM_C_ProfitCenterCompCodeVHType">
+                <Annotation Term="UI.TextArrangement" EnumMember="UI.TextArrangementType/TextLast"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.ZCSM_C_ProfitCenterVHType/ControllingArea">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.ZCSM_C_ProfitCenterVHType">
+                <Annotation Term="UI.LineItem">
+                    <Collection>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="ProfitCenter"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="ControllingArea"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="ValidityEndDate"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="ProfitCenterName"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="ValidityStartDate"/>
+                        </Record>
+                    </Collection>
+                </Annotation>
+                <Annotation Term="UI.TextArrangement" EnumMember="UI.TextArrangementType/TextLast"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.ZCSM_C_ProjOrd4ProfCntrVHType/ControllingArea">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.ZCSM_C_ProjOrd4ProfCntrVHType/OrderType">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.ZCSM_C_RebillingTypeVHType">
+                <Annotation Term="UI.HeaderInfo">
+                    <Record>
+                        <PropertyValue Property="TypeName" String="Rebilling Type"/>
+                        <PropertyValue Property="TypeNamePlural" String="Rebilling Types"/>
+                    </Record>
+                </Annotation>
+            </Annotations>
+            <Annotations Target="cds_zcsm_user.ZCSM_C_USER2VHType/Requester">
+                <Annotation Term="Common.Text" Path="UserName">
+                    <Annotation Term="UI.TextArrangement" EnumMember="UI.TextArrangementType/TextOnly"/>
+                </Annotation>
+            </Annotations>
+        </Schema>
+    </edmx:DataServices>
+</edmx:Edmx>
