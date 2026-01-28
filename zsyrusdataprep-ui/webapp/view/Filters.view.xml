@@ -20,24 +20,30 @@
                 class="sapmargin"
             >
                 <!-- Header -->
-               <HBox alignItems="Center" justifyContent="SpaceBetween" class="sapUiSmallMargin">
+             <VBox class="sapUiSmallMargin" alignItems="Center">
     <Title
         text="{i18n>filtersTitle}"
         level="H2"
         titleStyle="H2"
     />
-    <vm:VariantManagement 
-        id="idVariantManagement" 
-        save="onSaveVariant" 
+     <VBox  alignItems="Center">
+                 <vm:VariantManagement
+        id="idVariantManagement"
+        showExecuteOnSelection="false"
+        save="onSaveVariant"
         select="onSelectVariant"
-        xmlns:vm="sap.ui.comp.variants" />
-</HBox>
+        manage="onManageVariants"
+        xmlns:vm="sap.ui.comp.variants"
+    />
+    </VBox>
+</VBox>
 
                 <VBox
                     alignItems="Stretch"
                     justifyContent="Start"
                     width="100%"
                 >
+               
                     <!-- Ledger -->
                     <Label
                         text="{i18n>ledgerLabel}"
