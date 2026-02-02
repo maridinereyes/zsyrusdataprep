@@ -322,7 +322,6 @@ sap.ui.define(
         /* =========================================================== */
         onApplyFilters: function (oEvent) {
           var oModel = this.getView().getModel();
-          // var sFilter = this._buildFilterString();
           var aFilters = this._getFilters();
           var oBundle = this.getOwnerComponent()
             .getModel("i18n")
@@ -529,15 +528,40 @@ sap.ui.define(
           oVM.currentVariantSetModified(false);
         },
 
-        onGroupAccountTokenUpdate: function () {
-          if (this._bApplyingVariant) {
-            return;
-          }
+        onGroupAccountTokenUpdate: function (oEvent) {
+  if (this._bApplyingVariant) {
+    return;
+  }
 
-          this.byId("idVariantManagement").currentVariantSetModified(true);
+  var oMultiInput = this.byId("idGroupAccountNumber");
+  var aTokens = oMultiInput.getTokens();
 
-          this.onFilterChange();
-        },
+  aTokens.forEach(function (oToken) {
+   
+    if (oToken.getKey()) {
+      oToken.setKey(oToken.getKey().toUpperCase());
+    }
+    if (oToken.getText()) {
+      oToken.setText(oToken.getText().toUpperCase());
+    }
+
+    // Uppercase range values (EQ / BT)
+    var oRange = oToken.data("range");
+    if (oRange) {
+      if (oRange.value1) {
+        oRange.value1 = oRange.value1.toUpperCase();
+      }
+      if (oRange.value2) {
+        oRange.value2 = oRange.value2.toUpperCase();
+      }
+      oToken.data("range", oRange);
+    }
+  });
+
+  this.byId("idVariantManagement").currentVariantSetModified(true);
+  this.onFilterChange();
+}
+,
 
         onManageVariants: function (oEvent) {
           var aDeleted = oEvent.getParameter("deleted") || [];
@@ -655,8 +679,8 @@ sap.ui.define(
                   new Filter(
                     "CorpgrpacctBefore",
                     FilterOperator.BT,
-                    oFilterData.value1,
-                    oFilterData.value2,
+                    oFilterData.value1.toUpperCase,
+                    oFilterData.value2.toUpperCase,
                   ),
                 );
               } else if (oFilterData.operation === "Empty") {
@@ -672,7 +696,7 @@ sap.ui.define(
                     new Filter(
                       "CorpgrpacctBefore",
                       FilterOperator.NE,
-                      oFilterData.value1,
+                      oFilterData.value1.toUpperCase,
                     ),
                   );
                 } else {
@@ -680,7 +704,7 @@ sap.ui.define(
                     new Filter(
                       "CorpgrpacctBefore",
                       oFilterData.operation,
-                      oFilterData.value1,
+                      oFilterData.value1.toUpperCase,
                     ),
                   );
                 }
@@ -690,7 +714,7 @@ sap.ui.define(
                 new Filter(
                   "CorpgrpacctBefore",
                   sCommonOperator,
-                  oToken.getKey(),
+                  oToken.getKey().toUpperCase(),
                 ),
               );
             }
