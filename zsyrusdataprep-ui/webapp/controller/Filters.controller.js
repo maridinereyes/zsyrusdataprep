@@ -30,6 +30,7 @@ sap.ui.define(
     return Controller.extend(
       "com.lvmh.apollo.zsyrusdataprepui.controller.Filters",
       {
+        _bApplyingVariant: false,
         /* =========================================================== */
         /* INIT                                                        */
         /* =========================================================== */
@@ -61,7 +62,7 @@ sap.ui.define(
             this.byId("idVariantManagement").setInitialSelectionKey(sLastKey);
             this._applyVariantData(this._mSavedVariants[sLastKey].data);
           } else {
-            this._applyStandard(); // fallback to Standard
+            this._applyStandard();
           }
         },
 
@@ -69,6 +70,10 @@ sap.ui.define(
         /* FILTER CHANGE                                               */
         /* =========================================================== */
         onFilterChange: function () {
+          if (this._bApplyingVariant) {
+            return;
+          }
+
           var oView = this.getView();
 
           var bEnable = !!(
@@ -80,8 +85,31 @@ sap.ui.define(
           );
 
           oView.getModel("reportModel").setProperty("/applyEnabled", bEnable);
+
+          this.byId("idVariantManagement").currentVariantSetModified(true);
         },
 
+        onCompanyCodeChange: function (oEvent) {
+          const oComboBox = oEvent.getSource();
+          const sValue = oComboBox.getValue();
+          const aItems = oComboBox.getItems();
+          const oButton = this.byId("ApplyButton");
+
+          let bValid = false;
+
+          aItems.forEach(function (oItem) {
+            if (oItem.getText() === sValue) {
+              bValid = true;
+            }
+          });
+
+          oButton.setEnabled(bValid);
+
+          oComboBox.setValueState(bValid ? "None" : "Error");
+          oComboBox.setValueStateText(
+            bValid ? "" : "Please select a valid Company Code",
+          );
+        },
         /* =========================================================== */
         /* GROUP ACCOUNT VALUE HELP                                    */
         /* =========================================================== */
@@ -146,8 +174,16 @@ sap.ui.define(
               filterBar: oFilterBar,
               ok: function (oEvent) {
                 oMultiInput.setTokens(oEvent.getParameter("tokens"));
-                this.close();
-              },
+
+                if (!this._bApplyingVariant) {
+                  this.byId("idVariantManagement").currentVariantSetModified(
+                    true,
+                  );
+                }
+
+                this._oGroupAccVHD.close();
+              }.bind(this),
+
               cancel: function () {
                 this.close();
               },
@@ -365,7 +401,7 @@ sap.ui.define(
             complete: function () {},
           });
         },
-        // Helper to get all current UI values in a JSON object
+
         _getCurrentVariantData: function () {
           var oView = this.getView();
           return {
@@ -374,7 +410,7 @@ sap.ui.define(
             glHier: oView.byId("idGLAccountHierarchy").getValue(),
             dateFrom: oView.byId("idPostingDateFrom").getDateValue(),
             dateTo: oView.byId("idPostingDateTo").getDateValue(),
-            // Map tokens to a simple array of objects
+
             groupAccounts: oView
               .byId("idGroupAccountNumber")
               .getTokens()
@@ -382,27 +418,41 @@ sap.ui.define(
                 return {
                   key: oToken.getKey(),
                   text: oToken.getText(),
-                  rangeData: oToken.data("range"), // Important for BT/Exclude logic
+                  rangeData: oToken.data("range"),
                 };
               }),
           };
         },
 
-        // Helper to set UI values from a saved JSON object
         _applyVariantData: function (oData) {
           var oView = this.getView();
+          var oVM = this.byId("idVariantManagement");
+
+          this._bApplyingVariant = true;
+
           oView.byId("idLedgerBox").setValue(oData.ledger);
-          oView.byId("idCompanyCodeBox").setValue(oData.companyCode);
+          var sCompanyCode = oData.companyCode;
+
+          // DROP EXTRA VALUES IF ARRAY
+          if (Array.isArray(sCompanyCode)) {
+            sCompanyCode = sCompanyCode[0] || "";
+          }
+
+          oView.byId("idCompanyCodeBox").setValue(sCompanyCode);
+
           oView.byId("idGLAccountHierarchy").setValue(oData.glHier);
+
           oView
             .byId("idPostingDateFrom")
             .setDateValue(oData.dateFrom ? new Date(oData.dateFrom) : null);
+
           oView
             .byId("idPostingDateTo")
             .setDateValue(oData.dateTo ? new Date(oData.dateTo) : null);
 
           var oMultiInput = oView.byId("idGroupAccountNumber");
           oMultiInput.removeAllTokens();
+
           oData.groupAccounts.forEach(function (item) {
             var oToken = new Token({ key: item.key, text: item.text });
             if (item.rangeData) {
@@ -411,11 +461,15 @@ sap.ui.define(
             oMultiInput.addToken(oToken);
           });
 
-          this.onFilterChange();
+          this._bApplyingVariant = false;
+
+          oVM.currentVariantSetModified(false);
         },
+
         onSaveVariant: function (oEvent) {
           var sKey = oEvent.getParameter("key");
           var sName = oEvent.getParameter("name");
+          var bOverwrite = oEvent.getParameter("overwrite");
 
           this._mSavedVariants[sKey] = {
             name: sName,
@@ -427,16 +481,21 @@ sap.ui.define(
           localStorage.setItem(sUserKey + "_last", sKey);
 
           var oVM = this.byId("idVariantManagement");
-          oVM.addVariantItem(
-            new sap.ui.comp.variants.VariantItem({
-              key: sKey,
-              text: sName,
-            }),
-          );
+
+          if (!bOverwrite) {
+            oVM.addVariantItem(
+              new sap.ui.comp.variants.VariantItem({
+                key: sKey,
+                text: sName,
+              }),
+            );
+          }
 
           oVM.setInitialSelectionKey(sKey);
-
-          sap.m.MessageToast.show("Variant saved");
+          sap.m.MessageToast.show(
+            bOverwrite ? "Variant updated" : "Variant saved",
+          );
+          this.byId("idVariantManagement").currentVariantSetModified(false);
         },
 
         onSelectVariant: function (oEvent) {
@@ -453,7 +512,10 @@ sap.ui.define(
 
         _applyStandard: function () {
           var oView = this.getView();
+          var oVM = this.byId("idVariantManagement");
           var iYear = new Date().getFullYear();
+
+          this._bApplyingVariant = true;
 
           oView.byId("idLedgerBox").setValue("GG");
           oView.byId("idCompanyCodeBox").setValue("LVMH");
@@ -461,6 +523,18 @@ sap.ui.define(
           oView.byId("idPostingDateFrom").setDateValue(new Date(iYear, 0, 1));
           oView.byId("idPostingDateTo").setDateValue(new Date(iYear, 11, 31));
           oView.byId("idGroupAccountNumber").removeAllTokens();
+
+          this._bApplyingVariant = false;
+
+          oVM.currentVariantSetModified(false);
+        },
+
+        onGroupAccountTokenUpdate: function () {
+          if (this._bApplyingVariant) {
+            return;
+          }
+
+          this.byId("idVariantManagement").currentVariantSetModified(true);
 
           this.onFilterChange();
         },
@@ -504,6 +578,7 @@ sap.ui.define(
           // Rebuild UI
           this._rebuildVariantItems();
         },
+
         _rebuildVariantItems: function () {
           var oVM = this.byId("idVariantManagement");
           oVM.removeAllVariantItems();

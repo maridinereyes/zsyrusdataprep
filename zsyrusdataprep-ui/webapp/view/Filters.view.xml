@@ -74,6 +74,7 @@
         path: 'ZCSM_USER>/ZCSM_C_CompanyCodeVH'
     }"
                         selectionChange="onFilterChange"
+                        change="onCompanyCodeChange"
                     >
                         <core:Item
                             key="{ZCSM_USER>CompanyCode}"
@@ -154,6 +155,7 @@
                             type="Emphasized"
                             press="onApplyFilters"
                             enabled="{reportModel>/applyEnabled}"
+                            id="ApplyButton"
                         />
 
                         <Button
