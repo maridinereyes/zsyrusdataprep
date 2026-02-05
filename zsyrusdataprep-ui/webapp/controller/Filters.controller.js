@@ -76,6 +76,11 @@ sap.ui.define(
 
           var oView = this.getView();
 
+
+          if (!this._validatePostingDates()) {
+            return;
+          }
+
           var bEnable = !!(
             oView.byId("idCompanyCodeBox").getValue() &&
             oView.byId("idLedgerBox").getValue() &&
@@ -85,9 +90,11 @@ sap.ui.define(
           );
 
           oView.getModel("reportModel").setProperty("/applyEnabled", bEnable);
+          this.byId("ApplyButton").setEnabled(bEnable);
 
           this.byId("idVariantManagement").currentVariantSetModified(true);
         },
+
 
         onCompanyCodeChange: function (oEvent) {
           const oComboBox = oEvent.getSource();
@@ -173,16 +180,37 @@ sap.ui.define(
               ],
               filterBar: oFilterBar,
               ok: function (oEvent) {
-                oMultiInput.setTokens(oEvent.getParameter("tokens"));
+                var aTokens = oEvent.getParameter("tokens");
+
+                aTokens.forEach(function (oToken) {
+                  if (oToken.getKey()) {
+                    oToken.setKey(oToken.getKey().toUpperCase());
+                  }
+                  if (oToken.getText()) {
+                    oToken.setText(oToken.getText().toUpperCase());
+                  }
+
+                  var oRange = oToken.data("range");
+                  if (oRange) {
+                    if (oRange.value1) {
+                      oRange.value1 = oRange.value1.toUpperCase();
+                    }
+                    if (oRange.value2) {
+                      oRange.value2 = oRange.value2.toUpperCase();
+                    }
+                    oToken.data("range", oRange);
+                  }
+                });
+
+                oMultiInput.setTokens(aTokens);
 
                 if (!this._bApplyingVariant) {
-                  this.byId("idVariantManagement").currentVariantSetModified(
-                    true,
-                  );
+                  this.byId("idVariantManagement").currentVariantSetModified(true);
                 }
 
                 this._oGroupAccVHD.close();
               }.bind(this),
+
 
               cancel: function () {
                 this.close();
@@ -292,10 +320,10 @@ sap.ui.define(
                 if (oRange.operation === "BT") {
                   aConditions.push(
                     "(CorpgrpacctBefore ge '" +
-                      oRange.value1 +
-                      "' and CorpgrpacctBefore le '" +
-                      oRange.value2 +
-                      "')",
+                    oRange.value1 +
+                    "' and CorpgrpacctBefore le '" +
+                    oRange.value2 +
+                    "')",
                   );
                 }
 
@@ -322,6 +350,7 @@ sap.ui.define(
         /* =========================================================== */
         onApplyFilters: function (oEvent) {
           var oModel = this.getView().getModel();
+          // var sFilter = this._buildFilterString();
           var aFilters = this._getFilters();
           var oBundle = this.getOwnerComponent()
             .getModel("i18n")
@@ -368,8 +397,15 @@ sap.ui.define(
                       break;
 
                     case "warning":
-                      MessageBox.warning(sMessage + "\n\n" + sBackendMsg);
+                      MessageBox.warning(
+                        [
+                          sMessage,
+                          sBackendMsg,
+                          oMsg && oMsg.message ? oMsg.message : ""
+                        ].filter(Boolean).join("\n\n")
+                      );
                       break;
+
 
                     case "success":
                       MessageBox.success(
@@ -397,7 +433,7 @@ sap.ui.define(
                   : "Unknown error",
               );
             },
-            complete: function () {},
+            complete: function () { },
           });
         },
 
@@ -421,6 +457,42 @@ sap.ui.define(
                 };
               }),
           };
+        },
+
+        _validatePostingDates: function () {
+          var oView = this.getView();
+
+          var oDateFromPicker = oView.byId("idPostingDateFrom");
+          var oDateToPicker = oView.byId("idPostingDateTo");
+          var oApplyButton = this.byId("ApplyButton");
+
+          var dFrom = oDateFromPicker.getDateValue();
+          var dTo = oDateToPicker.getDateValue();
+
+          var oBundle = this.getOwnerComponent()
+            .getModel("i18n")
+            .getResourceBundle();
+
+          oDateFromPicker.setValueState("None");
+          oDateToPicker.setValueState("None");
+
+          if (dFrom && dTo && dFrom > dTo) {
+            oDateFromPicker.setValueState("Error");
+            oDateFromPicker.setValueStateText(
+              oBundle.getText("dateFromError")
+            );
+
+            oDateToPicker.setValueState("Error");
+            oDateToPicker.setValueStateText(
+              oBundle.getText("dateToError")
+            );
+
+            oApplyButton.setEnabled(false);
+
+            return false;
+          }
+
+          return true;
         },
 
         _applyVariantData: function (oData) {
@@ -529,39 +601,38 @@ sap.ui.define(
         },
 
         onGroupAccountTokenUpdate: function (oEvent) {
-  if (this._bApplyingVariant) {
-    return;
-  }
+          if (this._bApplyingVariant) {
+            return;
+          }
 
-  var oMultiInput = this.byId("idGroupAccountNumber");
-  var aTokens = oMultiInput.getTokens();
+          var oMultiInput = this.byId("idGroupAccountNumber");
+          var aTokens = oMultiInput.getTokens();
 
-  aTokens.forEach(function (oToken) {
-   
-    if (oToken.getKey()) {
-      oToken.setKey(oToken.getKey().toUpperCase());
-    }
-    if (oToken.getText()) {
-      oToken.setText(oToken.getText().toUpperCase());
-    }
+          aTokens.forEach(function (oToken) {
 
-    // Uppercase range values (EQ / BT)
-    var oRange = oToken.data("range");
-    if (oRange) {
-      if (oRange.value1) {
-        oRange.value1 = oRange.value1.toUpperCase();
-      }
-      if (oRange.value2) {
-        oRange.value2 = oRange.value2.toUpperCase();
-      }
-      oToken.data("range", oRange);
-    }
-  });
+            if (oToken.getKey()) {
+              oToken.setKey(oToken.getKey().toUpperCase());
+            }
+            if (oToken.getText()) {
+              oToken.setText(oToken.getText().toUpperCase());
+            }
 
-  this.byId("idVariantManagement").currentVariantSetModified(true);
-  this.onFilterChange();
-}
-,
+            var oRange = oToken.data("range");
+            if (oRange) {
+              if (oRange.value1) {
+                oRange.value1 = oRange.value1.toUpperCase();
+              }
+              if (oRange.value2) {
+                oRange.value2 = oRange.value2.toUpperCase();
+              }
+              oToken.data("range", oRange);
+            }
+          });
+
+          this.byId("idVariantManagement").currentVariantSetModified(true);
+          this.onFilterChange();
+        }
+        ,
 
         onManageVariants: function (oEvent) {
           var aDeleted = oEvent.getParameter("deleted") || [];
@@ -679,8 +750,8 @@ sap.ui.define(
                   new Filter(
                     "CorpgrpacctBefore",
                     FilterOperator.BT,
-                    oFilterData.value1.toUpperCase,
-                    oFilterData.value2.toUpperCase,
+                    oFilterData.value1.toUpperCase(),
+                    oFilterData.value2.toUpperCase(),
                   ),
                 );
               } else if (oFilterData.operation === "Empty") {
@@ -696,7 +767,7 @@ sap.ui.define(
                     new Filter(
                       "CorpgrpacctBefore",
                       FilterOperator.NE,
-                      oFilterData.value1.toUpperCase,
+                      oFilterData.value1.toUpperCase(),
                     ),
                   );
                 } else {
@@ -704,7 +775,7 @@ sap.ui.define(
                     new Filter(
                       "CorpgrpacctBefore",
                       oFilterData.operation,
-                      oFilterData.value1.toUpperCase,
+                      oFilterData.value1.toUpperCase(),
                     ),
                   );
                 }
