@@ -396,24 +396,22 @@ sap.ui.define(
                       MessageBox.error(sBackendMsg);
                       break;
 
-                   case "warning":
-  const sFormattedBackendMsg = sBackendMsg
-    ? sBackendMsg.replace(
-        /(\n)?(Unbalanced balance sheet)/g,
-        "\n\n$2"
-      )
-    : "";
+                    case "warning":
+                      const sFormattedBackendMsg = sBackendMsg
+                        ? sBackendMsg.replace(
+                          /(\n)?(Unbalanced balance sheet|Bilan déséquilibré)/g,
+                          "\n\n$2"
+                        )
+                        : "";
 
-  MessageBox.warning(
-    [
-      sMessage,
-      sFormattedBackendMsg,
-      oMsg && oMsg.message ? oMsg.message : ""
-    ].filter(Boolean).join("\n\n")
-  );
-  break;
-
-
+                      MessageBox.warning(
+                        [
+                          sMessage,
+                          sFormattedBackendMsg,
+                          oMsg && oMsg.message ? oMsg.message : ""
+                        ].filter(Boolean).join("\n\n")
+                      );
+                      break;
 
                     case "success":
                       MessageBox.success(
