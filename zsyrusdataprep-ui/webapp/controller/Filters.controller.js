@@ -113,9 +113,12 @@ sap.ui.define(
           oButton.setEnabled(bValid);
 
           oComboBox.setValueState(bValid ? "None" : "Error");
+          const oBundle = this.getView().getModel("i18n").getResourceBundle();
+
           oComboBox.setValueStateText(
-            bValid ? "" : "Please select a valid Company Code",
+            bValid ? "" : oBundle.getText("companyCodeInvalid")
           );
+
         },
         /* =========================================================== */
         /* GROUP ACCOUNT VALUE HELP                                    */
