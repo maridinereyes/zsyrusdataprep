@@ -400,7 +400,7 @@ sap.ui.define(
                       const sFormattedBackendMsg = sBackendMsg
                         ? sBackendMsg.replace(
                           /(\n)?(Unbalanced balance sheet|Bilan déséquilibré)/g,
-                          "\n\n$2"
+                          "\n\n$2\n"
                         )
                         : "";
 
@@ -569,8 +569,12 @@ sap.ui.define(
           }
 
           oVM.setInitialSelectionKey(sKey);
+          var oBundle = this.getView().getModel("i18n").getResourceBundle();
+
           sap.m.MessageToast.show(
-            bOverwrite ? "Variant updated" : "Variant saved",
+            bOverwrite
+              ? oBundle.getText("variantUpdated")
+              : oBundle.getText("variantSaved")
           );
           this.byId("idVariantManagement").currentVariantSetModified(false);
         },
