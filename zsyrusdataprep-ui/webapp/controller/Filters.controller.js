@@ -35,6 +35,9 @@ sap.ui.define(
         /* INIT                                                        */
         /* =========================================================== */
         onInit: function () {
+          this._oBundle = this.getOwnerComponent()
+            .getModel("i18n")
+            .getResourceBundle();
           var oModel = new JSONModel({ applyEnabled: false });
           this.getView().setModel(oModel, "reportModel");
 
@@ -113,10 +116,10 @@ sap.ui.define(
           oButton.setEnabled(bValid);
 
           oComboBox.setValueState(bValid ? "None" : "Error");
-          const oBundle = this.getView().getModel("i18n").getResourceBundle();
+
 
           oComboBox.setValueStateText(
-            bValid ? "" : oBundle.getText("companyCodeInvalid")
+            bValid ? "" : this._oBundle.getText("companyCodeInvalid")
           );
 
         },
@@ -131,7 +134,7 @@ sap.ui.define(
           );
 
           if (!oGroupAccountModel) {
-            MessageBox.error("Group Account CDS model not found.");
+            MessageBox.error(this._oBundle.getText("groupAccountModelNotFound"));
             return;
           }
 
@@ -169,14 +172,14 @@ sap.ui.define(
 
             // VALUE HELP DIALOG
             this._oGroupAccVHD = new ValueHelpDialog({
-              title: "Group Account",
+              title: this._oBundle.getText("groupAccountTitle"),
               supportMultiselect: true,
               supportRanges: true,
               key: "bilkt",
               descriptionKey: "bilkt",
               rangeKeyFields: [
                 {
-                  label: "Group Account Number",
+                  label: this._oBundle.getText("groupAccountNumber"),
                   key: "bilkt",
                   type: "string",
                 },
@@ -224,13 +227,16 @@ sap.ui.define(
               }.bind(this),
             });
 
+
+
             this._oGroupAccVHD.setRangeKeyFields([
               {
-                label: "Group Account Number",
+                label: this._oBundle.getText("groupAccountNumber"),
                 key: "bilkt",
                 type: "string",
               },
             ]);
+
 
             this._oGroupAccVHD.getTableAsync().then(
               function (oTable) {
@@ -238,7 +244,7 @@ sap.ui.define(
                 oTable.bindRows("/ZDDL_FI_GROUPACCOUNT");
                 oTable.addColumn(
                   new sap.ui.table.Column({
-                    label: new sap.m.Label({ text: "Group Account Number" }),
+                    label: new sap.m.Label({ text: this._oBundle.getText("groupAccountNumber") }),
                     template: new sap.m.Text({ text: "{bilkt}" }),
                   }),
                 );
@@ -355,12 +361,9 @@ sap.ui.define(
           var oModel = this.getView().getModel();
           // var sFilter = this._buildFilterString();
           var aFilters = this._getFilters();
-          var oBundle = this.getOwnerComponent()
-            .getModel("i18n")
-            .getResourceBundle();
 
-          var sMessage = oBundle.getText("successMsginwarning");
-          var sSuccessMessage = oBundle.getText("successMsgwithoutwarning");
+          var sMessage = this._oBundle.getText("successMsginwarning");
+          var sSuccessMessage = this._oBundle.getText("successMsgwithoutwarning");
 
           BusyIndicator.show(0);
 
@@ -478,9 +481,6 @@ sap.ui.define(
           var dFrom = oDateFromPicker.getDateValue();
           var dTo = oDateToPicker.getDateValue();
 
-          var oBundle = this.getOwnerComponent()
-            .getModel("i18n")
-            .getResourceBundle();
 
           oDateFromPicker.setValueState("None");
           oDateToPicker.setValueState("None");
@@ -488,12 +488,12 @@ sap.ui.define(
           if (dFrom && dTo && dFrom > dTo) {
             oDateFromPicker.setValueState("Error");
             oDateFromPicker.setValueStateText(
-              oBundle.getText("dateFromError")
+              this._oBundle.getText("dateFromError")
             );
 
             oDateToPicker.setValueState("Error");
             oDateToPicker.setValueStateText(
-              oBundle.getText("dateToError")
+              this._oBundle.getText("dateToError")
             );
 
             oApplyButton.setEnabled(false);
@@ -572,12 +572,11 @@ sap.ui.define(
           }
 
           oVM.setInitialSelectionKey(sKey);
-          var oBundle = this.getView().getModel("i18n").getResourceBundle();
 
           sap.m.MessageToast.show(
             bOverwrite
-              ? oBundle.getText("variantUpdated")
-              : oBundle.getText("variantSaved")
+              ? this._oBundle.getText("variantUpdated")
+              : this._oBundle.getText("variantSaved")
           );
           this.byId("idVariantManagement").currentVariantSetModified(false);
         },
