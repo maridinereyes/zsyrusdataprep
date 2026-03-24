@@ -23,789 +23,445 @@ sap.ui.define(
     FilterBar,
     SearchField,
     Filter,
-    FilterOperator,
+    FilterOperator
   ) {
     "use strict";
 
-    return Controller.extend(
-      "com.lvmh.apollo.zsyrusdataprepui.controller.Filters",
-      {
-        _bApplyingVariant: false,
-        /* =========================================================== */
-        /* INIT                                                        */
-        /* =========================================================== */
-        onInit: function () {
-          this._oBundle = this.getOwnerComponent()
-            .getModel("i18n")
-            .getResourceBundle();
-          var oModel = new JSONModel({ applyEnabled: false });
-          this.getView().setModel(oModel, "reportModel");
-
-          var oView = this.getView();
-          var iYear = new Date().getFullYear();
-
-          oView.byId("idGLAccountHierarchy").setValue("IFRS");
-          oView.byId("idPostingDateFrom").setDateValue(new Date(iYear, 0, 1));
-          oView.byId("idPostingDateTo").setDateValue(new Date(iYear, 11, 31));
-
-          oView.getModel("reportModel").setProperty("/applyEnabled", true);
-
-          /* ===============================
-         VARIANT RESTORE (ADD THIS)
-      =============================== */
-          var sUserKey = this._getUserVariantKey();
-          this._mSavedVariants = JSON.parse(
-            localStorage.getItem(sUserKey) || "{}",
-          );
-
-          this._rebuildVariantItems();
-
-          var sLastKey = localStorage.getItem(sUserKey + "_last");
-          if (sLastKey && this._mSavedVariants[sLastKey]) {
-            this.byId("idVariantManagement").setInitialSelectionKey(sLastKey);
-            this._applyVariantData(this._mSavedVariants[sLastKey].data);
-          } else {
-            this._applyStandard();
-          }
-        },
-
-        /* =========================================================== */
-        /* FILTER CHANGE                                               */
-        /* =========================================================== */
-        onFilterChange: function () {
-          if (this._bApplyingVariant) {
-            return;
-          }
-
-          var oView = this.getView();
-
-
-          if (!this._validatePostingDates()) {
-            return;
-          }
-
-          var bEnable = !!(
-            oView.byId("idCompanyCodeBox").getValue() &&
-            oView.byId("idLedgerBox").getValue() &&
-            oView.byId("idGLAccountHierarchy").getValue() &&
-            oView.byId("idPostingDateFrom").getDateValue() &&
-            oView.byId("idPostingDateTo").getDateValue()
-          );
-
-          oView.getModel("reportModel").setProperty("/applyEnabled", bEnable);
-          this.byId("ApplyButton").setEnabled(bEnable);
-
-          this.byId("idVariantManagement").currentVariantSetModified(true);
-        },
-
-
-        onCompanyCodeChange: function (oEvent) {
-          const oComboBox = oEvent.getSource();
-          const sValue = oComboBox.getValue();
-          const aItems = oComboBox.getItems();
-          const oButton = this.byId("ApplyButton");
-
-          let bValid = false;
-
-          aItems.forEach(function (oItem) {
-            if (oItem.getText() === sValue) {
-              bValid = true;
-            }
-          });
-
-          oButton.setEnabled(bValid);
-
-          oComboBox.setValueState(bValid ? "None" : "Error");
-
-
-          oComboBox.setValueStateText(
-            bValid ? "" : this._oBundle.getText("companyCodeInvalid")
-          );
-
-        },
-        /* =========================================================== */
-        /* GROUP ACCOUNT VALUE HELP                                    */
-        /* =========================================================== */
-        onGroupAccountValueHelp: function () {
-          var oView = this.getView();
-          var oMultiInput = oView.byId("idGroupAccountNumber");
-          var oGroupAccountModel = this.getOwnerComponent().getModel(
-            "ZDDL_FI_GROUPACCOUNT_CDS",
-          );
-
-          if (!oGroupAccountModel) {
-            MessageBox.error(this._oBundle.getText("groupAccountModelNotFound"));
-            return;
-          }
-
-          if (!this._oGroupAccVHD) {
-            // SEARCH FIELD
-            var oSearchField = new SearchField({
-              width: "100%",
-              liveChange: function (oEvent) {
-                var sValue = oEvent.getSource().getValue();
-                var oTable = this._oGroupAccVHD.getTable();
-                var oBinding = oTable.getBinding("rows");
-                var aFilters = [];
-                if (sValue) {
-                  aFilters.push(
-                    new sap.ui.model.Filter(
-                      "bilkt",
-                      sap.ui.model.FilterOperator.Contains,
-                      sValue,
-                    ),
-                  );
-                }
-                oBinding.filter(aFilters);
-                this._updateGroupAccountCount();
-              }.bind(this),
-            });
-
-            // FILTER BAR
-            var oFilterBar = new FilterBar({
-              advancedMode: false,
-              filterBarExpanded: false,
-              showGoOnFB: false,
-              useToolbar: true,
-            });
-            oFilterBar.setBasicSearch(oSearchField);
-
-            // VALUE HELP DIALOG
-            this._oGroupAccVHD = new ValueHelpDialog({
-              title: this._oBundle.getText("groupAccountTitle"),
-              supportMultiselect: true,
-              supportRanges: true,
-              key: "bilkt",
-              descriptionKey: "bilkt",
-              rangeKeyFields: [
-                {
-                  label: this._oBundle.getText("groupAccountNumber"),
-                  key: "bilkt",
-                  type: "string",
-                },
-              ],
-              filterBar: oFilterBar,
-              ok: function (oEvent) {
-                var aTokens = oEvent.getParameter("tokens");
-
-                aTokens.forEach(function (oToken) {
-                  if (oToken.getKey()) {
-                    oToken.setKey(oToken.getKey().toUpperCase());
-                  }
-                  if (oToken.getText()) {
-                    oToken.setText(oToken.getText().toUpperCase());
-                  }
-
-                  var oRange = oToken.data("range");
-                  if (oRange) {
-                    if (oRange.value1) {
-                      oRange.value1 = oRange.value1.toUpperCase();
-                    }
-                    if (oRange.value2) {
-                      oRange.value2 = oRange.value2.toUpperCase();
-                    }
-                    oToken.data("range", oRange);
-                  }
-                });
-
-                oMultiInput.setTokens(aTokens);
-
-                if (!this._bApplyingVariant) {
-                  this.byId("idVariantManagement").currentVariantSetModified(true);
-                }
-
-                this._oGroupAccVHD.close();
-              }.bind(this),
-
-
-              cancel: function () {
-                this.close();
-              },
-              afterClose: function () {
-                this.destroy();
-                this._oGroupAccVHD = null;
-              }.bind(this),
-            });
-
-
-
-            this._oGroupAccVHD.setRangeKeyFields([
-              {
-                label: this._oBundle.getText("groupAccountNumber"),
-                key: "bilkt",
-                type: "string",
-              },
-            ]);
-
-
-            this._oGroupAccVHD.getTableAsync().then(
-              function (oTable) {
-                oTable.setModel(oGroupAccountModel);
-                oTable.bindRows("/ZDDL_FI_GROUPACCOUNT");
-                oTable.addColumn(
-                  new sap.ui.table.Column({
-                    label: new sap.m.Label({ text: this._oBundle.getText("groupAccountNumber") }),
-                    template: new sap.m.Text({ text: "{bilkt}" }),
-                  }),
-                );
-                oTable.getBinding("rows").attachDataReceived(
-                  function () {
-                    this._updateGroupAccountCount();
-                  }.bind(this),
-                );
-              }.bind(this),
-            );
-          }
-
-          this._oGroupAccVHD.open();
-          setTimeout(
-            function () {
-              this._updateGroupAccountCount();
-            }.bind(this),
-            0,
-          );
-        },
-        _getUserVariantKey: function () {
-          var oUserInfo = sap.ushell?.Container?.getService("UserInfo");
-          var sUserId = oUserInfo ? oUserInfo.getId() : "ANONYMOUS";
-          return "SYRUS_VARIANTS_" + sUserId;
-        },
-
-        _updateGroupAccountCount: function () {
-          if (!this._oGroupAccVHD) return;
-          var oTable = this._oGroupAccVHD.getTable();
-          var oBinding = oTable && oTable.getBinding("rows");
-          if (!oBinding) return;
-          this._oGroupAccVHD.setTitle(
-            "Group Account (" + oBinding.getLength() + ")",
-          );
-        },
-
-        /* =========================================================== */
-        /* BUILD FILTER STRING FOR GET                                 */
-        /* =========================================================== */
-        _buildFilterString: function () {
-          var oView = this.getView();
-          var dDateFrom = oView.byId("idPostingDateFrom").getDateValue();
-          var dDateTo = oView.byId("idPostingDateTo").getDateValue();
-          var oDateFormat = DateFormat.getDateInstance({
-            pattern: "yyyy-MM-dd",
-          });
-          var sDateFrom = dDateFrom ? oDateFormat.format(dDateFrom) : null;
-          var sDateTo = dDateTo ? oDateFormat.format(dDateTo) : null;
-
-          var sFilter =
-            "Companycode eq '" +
-            oView.byId("idCompanyCodeBox").getValue() +
-            "'" +
-            " and Ledger eq '" +
-            oView.byId("idLedgerBox").getValue() +
-            "'" +
-            " and Glaccounthier eq '" +
-            oView.byId("idGLAccountHierarchy").getValue() +
-            "'";
-
-          if (sDateFrom) {
-            sFilter += " and From_postingdate ge '" + sDateFrom + "'";
-            sFilter +=
-              " and FiscalPeriod eq '" +
-              String(dDateFrom.getMonth() + 1).padStart(2, "0") +
-              "'";
-          }
-          if (sDateTo) {
-            sFilter += " and To_postingdate le '" + sDateTo + "'";
-            sFilter += " and FiscalYear eq '" + dDateTo.getFullYear() + "'";
-          }
-
-          var aTokens = oView.byId("idGroupAccountNumber").getTokens();
-
-          if (aTokens.length) {
-            var aConditions = [];
-
-            aTokens.forEach(function (oToken) {
-              var oRange = oToken.data && oToken.data.range;
-
-              if (oRange) {
-                if (oRange.operation === "BT") {
-                  aConditions.push(
-                    "(CorpgrpacctBefore ge '" +
-                    oRange.value1 +
-                    "' and CorpgrpacctBefore le '" +
-                    oRange.value2 +
-                    "')",
-                  );
-                }
-
-                if (oRange.operation === "EQ") {
-                  aConditions.push(
-                    "CorpgrpacctBefore eq '" + oRange.value1 + "'",
-                  );
-                }
-              } else {
-                aConditions.push(
-                  "CorpgrpacctBefore eq '" + oToken.getKey() + "'",
-                );
-              }
-            });
-
-            sFilter += " and (" + aConditions.join(" or ") + ")";
-          }
-
-          return sFilter;
-        },
-
-        /* =========================================================== */
-        /* APPLY FILTERS                                               */
-        /* =========================================================== */
-        onApplyFilters: function (oEvent) {
-          var oModel = this.getView().getModel();
-          // var sFilter = this._buildFilterString();
-          var aFilters = this._getFilters();
-
-          var sMessage = this._oBundle.getText("successMsginwarning");
-          var sSuccessMessage = this._oBundle.getText("successMsgwithoutwarning");
-
-          BusyIndicator.show(0);
-
-          oModel.read("/SyrusSet", {
-            filters: aFilters,
-            success: function (oData, oResponse) {
-              BusyIndicator.hide();
-
-              var oResult = {};
-              var sSapMessage =
-                oResponse &&
-                oResponse.headers &&
-                oResponse.headers["sap-message"];
-
-              if (sSapMessage) {
-                try {
-                  var oMsg = JSON.parse(sSapMessage);
-                  var aDetails = oMsg.details || [];
-
-                  var sBackendMsg = "";
-
-                  if (aDetails.length > 0) {
-                    sBackendMsg = aDetails
-                      .map(function (d) {
-                        return d.message;
-                      })
-                      .join("\n");
-                  } else {
-                    sBackendMsg = oMsg.message || "";
-                  }
-
-                  oResult.sapMessage = oMsg;
-
-                  switch (oMsg.severity) {
-                    case "error":
-                      MessageBox.error(sBackendMsg);
-                      break;
-
-                    case "warning":
-                      const sFormattedBackendMsg = sBackendMsg
-                        ? sBackendMsg.replace(
-                          /(\n)?(Unbalanced balance sheet|Bilan déséquilibré)/g,
-                          "\n\n$2\n"
-                        )
-                        : "";
-
-                      MessageBox.warning(
-                        [
-                          sMessage,
-                          sFormattedBackendMsg,
-                          oMsg && oMsg.message ? oMsg.message : ""
-                        ].filter(Boolean).join("\n\n")
-                      );
-                      break;
-
-                    case "success":
-                      MessageBox.success(
-                        sSuccessMessage + "\n\n" + sBackendMsg,
-                      );
-                      break;
-
-                    default:
-                      MessageBox.information(
-                        sSuccessMessage + "\n\n" + sBackendMsg,
-                      );
-                  }
-                } catch (e) {
-                  MessageBox.success(sSuccessMessage);
-                }
-              } else {
-                MessageBox.success(sSuccessMessage);
-              }
-            },
-            error: function (oError) {
-              BusyIndicator.hide();
-              MessageBox.error(
-                oError.responseText
-                  ? JSON.parse(oError.responseText).error.message.value
-                  : "Unknown error",
-              );
-            },
-            complete: function () { },
-          });
-        },
-
-        _getCurrentVariantData: function () {
-          var oView = this.getView();
-          return {
-            ledger: oView.byId("idLedgerBox").getValue(),
-            companyCode: oView.byId("idCompanyCodeBox").getValue(),
-            glHier: oView.byId("idGLAccountHierarchy").getValue(),
-            dateFrom: oView.byId("idPostingDateFrom").getDateValue(),
-            dateTo: oView.byId("idPostingDateTo").getDateValue(),
-
-            groupAccounts: oView
-              .byId("idGroupAccountNumber")
-              .getTokens()
-              .map(function (oToken) {
-                return {
-                  key: oToken.getKey(),
-                  text: oToken.getText(),
-                  rangeData: oToken.data("range"),
-                };
-              }),
-          };
-        },
-
-        _validatePostingDates: function () {
-          var oView = this.getView();
-
-          var oDateFromPicker = oView.byId("idPostingDateFrom");
-          var oDateToPicker = oView.byId("idPostingDateTo");
-          var oApplyButton = this.byId("ApplyButton");
-
-          var dFrom = oDateFromPicker.getDateValue();
-          var dTo = oDateToPicker.getDateValue();
-
-
-          oDateFromPicker.setValueState("None");
-          oDateToPicker.setValueState("None");
-
-          if (dFrom && dTo && dFrom > dTo) {
-            oDateFromPicker.setValueState("Error");
-            oDateFromPicker.setValueStateText(
-              this._oBundle.getText("dateFromError")
-            );
-
-            oDateToPicker.setValueState("Error");
-            oDateToPicker.setValueStateText(
-              this._oBundle.getText("dateToError")
-            );
-
-            oApplyButton.setEnabled(false);
-
-            return false;
-          }
-
-          return true;
-        },
-
-        _applyVariantData: function (oData) {
-          var oView = this.getView();
-          var oVM = this.byId("idVariantManagement");
-
-          this._bApplyingVariant = true;
-
-          oView.byId("idLedgerBox").setValue(oData.ledger);
-          var sCompanyCode = oData.companyCode;
-
-          // DROP EXTRA VALUES IF ARRAY
-          if (Array.isArray(sCompanyCode)) {
-            sCompanyCode = sCompanyCode[0] || "";
-          }
-
-          oView.byId("idCompanyCodeBox").setValue(sCompanyCode);
-
-          oView.byId("idGLAccountHierarchy").setValue(oData.glHier);
-
-          oView
-            .byId("idPostingDateFrom")
-            .setDateValue(oData.dateFrom ? new Date(oData.dateFrom) : null);
-
-          oView
-            .byId("idPostingDateTo")
-            .setDateValue(oData.dateTo ? new Date(oData.dateTo) : null);
-
-          var oMultiInput = oView.byId("idGroupAccountNumber");
-          oMultiInput.removeAllTokens();
-
-          oData.groupAccounts.forEach(function (item) {
-            var oToken = new Token({ key: item.key, text: item.text });
-            if (item.rangeData) {
-              oToken.data("range", item.rangeData);
-            }
-            oMultiInput.addToken(oToken);
-          });
-
-          this._bApplyingVariant = false;
-
-          oVM.currentVariantSetModified(false);
-        },
-
-        onSaveVariant: function (oEvent) {
-          var sKey = oEvent.getParameter("key");
-          var sName = oEvent.getParameter("name");
-          var bOverwrite = oEvent.getParameter("overwrite");
-
-          this._mSavedVariants[sKey] = {
-            name: sName,
-            data: this._getCurrentVariantData(),
-          };
-
-          var sUserKey = this._getUserVariantKey();
-          localStorage.setItem(sUserKey, JSON.stringify(this._mSavedVariants));
-          localStorage.setItem(sUserKey + "_last", sKey);
-
-          var oVM = this.byId("idVariantManagement");
-
-          if (!bOverwrite) {
-            oVM.addVariantItem(
-              new sap.ui.comp.variants.VariantItem({
-                key: sKey,
-                text: sName,
-              }),
-            );
-          }
-
-          oVM.setInitialSelectionKey(sKey);
-
-          sap.m.MessageToast.show(
-            bOverwrite
-              ? this._oBundle.getText("variantUpdated")
-              : this._oBundle.getText("variantSaved")
-          );
-          this.byId("idVariantManagement").currentVariantSetModified(false);
-        },
-
-        onSelectVariant: function (oEvent) {
-          var sKey = oEvent.getParameter("key");
-
-          if (sKey === "*" || !this._mSavedVariants[sKey]) {
-            this._applyStandard();
-            return;
-          }
-
-          this._applyVariantData(this._mSavedVariants[sKey].data);
-          localStorage.setItem(this._getUserVariantKey() + "_last", sKey);
-        },
-
-        _applyStandard: function () {
-          var oView = this.getView();
-          var oVM = this.byId("idVariantManagement");
-          var iYear = new Date().getFullYear();
-
-          this._bApplyingVariant = true;
-
-          oView.byId("idLedgerBox").setValue("GG");
-          oView.byId("idCompanyCodeBox").setValue("LVMH");
-          oView.byId("idGLAccountHierarchy").setValue("IFRS");
-          oView.byId("idPostingDateFrom").setDateValue(new Date(iYear, 0, 1));
-          oView.byId("idPostingDateTo").setDateValue(new Date(iYear, 11, 31));
-          oView.byId("idGroupAccountNumber").removeAllTokens();
-
-          this._bApplyingVariant = false;
-
-          oVM.currentVariantSetModified(false);
-        },
-
-        onGroupAccountTokenUpdate: function (oEvent) {
-          if (this._bApplyingVariant) {
-            return;
-          }
-
-          var oMultiInput = this.byId("idGroupAccountNumber");
-          var aTokens = oMultiInput.getTokens();
-
-          aTokens.forEach(function (oToken) {
-
-            if (oToken.getKey()) {
-              oToken.setKey(oToken.getKey().toUpperCase());
-            }
-            if (oToken.getText()) {
-              oToken.setText(oToken.getText().toUpperCase());
-            }
-
-            var oRange = oToken.data("range");
-            if (oRange) {
-              if (oRange.value1) {
-                oRange.value1 = oRange.value1.toUpperCase();
-              }
-              if (oRange.value2) {
-                oRange.value2 = oRange.value2.toUpperCase();
-              }
-              oToken.data("range", oRange);
-            }
-          });
-
-          this.byId("idVariantManagement").currentVariantSetModified(true);
-          this.onFilterChange();
+    return Controller.extend("com.lvmh.apollo.zsyrusdataprepui.controller.Filters", {
+      _bApplyingVariant: false,
+
+      /* =========================================================== */
+      /* INIT                                                        */
+      /* =========================================================== */
+      onInit: function () {
+        this._oBundle = this.getOwnerComponent().getModel("i18n").getResourceBundle();
+        this.getView().setModel(new JSONModel({ applyEnabled: false }), "reportModel");
+
+        const iYear = new Date().getFullYear();
+
+        this.byId("idGLAccountHierarchy").setValue("IFRS");
+        this.byId("idPostingDateFrom").setDateValue(new Date(iYear, 0, 1));
+        this.byId("idPostingDateTo").setDateValue(new Date(iYear, 11, 31));
+
+        this.getView().getModel("reportModel").setProperty("/applyEnabled", true);
+
+        // Variant Restore
+        const sUserKey = this._getUserVariantKey();
+        this._mSavedVariants = JSON.parse(localStorage.getItem(sUserKey) || "{}");
+
+        this._rebuildVariantItems();
+
+        const sLastKey = localStorage.getItem(`${sUserKey}_last`);
+        if (sLastKey && this._mSavedVariants[sLastKey]) {
+          this.byId("idVariantManagement").setInitialSelectionKey(sLastKey);
+          this._applyVariantData(this._mSavedVariants[sLastKey].data);
+        } else {
+          this._applyStandard();
         }
-        ,
+      },
 
-        onManageVariants: function (oEvent) {
-          var aDeleted = oEvent.getParameter("deleted") || [];
-          var aRenamed = oEvent.getParameter("renamed") || [];
-          var aOverwritten = oEvent.getParameter("overwritten") || [];
+      /* =========================================================== */
+      /* EVENT HANDLERS                                              */
+      /* =========================================================== */
+      onFilterChange: function () {
+        if (this._bApplyingVariant) return;
 
-          // DELETE
-          aDeleted.forEach(
-            function (sKey) {
-              delete this._mSavedVariants[sKey];
-            }.bind(this),
-          );
+        if (!this._validatePostingDates()) return;
 
-          // RENAME
-          aRenamed.forEach(
-            function (oRename) {
-              if (this._mSavedVariants[oRename.key]) {
-                this._mSavedVariants[oRename.key].name = oRename.name;
-              }
-            }.bind(this),
-          );
+        const bEnable = !!(
+          this.byId("idCompanyCodeBox").getValue() &&
+          this.byId("idLedgerBox").getValue() &&
+          this.byId("idGLAccountHierarchy").getValue() &&
+          this.byId("idPostingDateFrom").getDateValue() &&
+          this.byId("idPostingDateTo").getDateValue()
+        );
 
-          // OVERWRITE
-          aOverwritten.forEach(
-            function (sKey) {
-              if (this._mSavedVariants[sKey]) {
-                this._mSavedVariants[sKey].data = this._getCurrentVariantData();
-              }
-            }.bind(this),
-          );
+        this.getView().getModel("reportModel").setProperty("/applyEnabled", bEnable);
+        this.byId("ApplyButton").setEnabled(bEnable);
+        this.byId("idVariantManagement").currentVariantSetModified(true);
+      },
 
-          // Persist
-          localStorage.setItem(
-            this._getUserVariantKey(),
-            JSON.stringify(this._mSavedVariants),
-          );
+      onCompanyCodeChange: function (oEvent) {
+        const oComboBox = oEvent.getSource();
+        const sValue = oComboBox.getValue();
+        
+        // Use .some() to short-circuit the loop once a match is found
+        const bValid = oComboBox.getItems().some((oItem) => oItem.getText() === sValue);
 
-          // Rebuild UI
-          this._rebuildVariantItems();
-        },
+        this.byId("ApplyButton").setEnabled(bValid);
+        oComboBox.setValueState(bValid ? "None" : "Error");
+        oComboBox.setValueStateText(bValid ? "" : this._oBundle.getText("companyCodeInvalid"));
+      },
 
-        _rebuildVariantItems: function () {
-          var oVM = this.byId("idVariantManagement");
-          oVM.removeAllVariantItems();
+      /* =========================================================== */
+      /* GROUP ACCOUNT VALUE HELP                                    */
+      /* =========================================================== */
+      onGroupAccountValueHelp: function () {
+        const oMultiInput = this.byId("idGroupAccountNumber");
+        const oGroupAccountModel = this.getOwnerComponent().getModel("ZDDL_FI_GROUPACCOUNT_CDS");
 
-          Object.keys(this._mSavedVariants).forEach(
-            function (sKey) {
-              oVM.addVariantItem(
-                new sap.ui.comp.variants.VariantItem({
-                  key: sKey,
-                  text: this._mSavedVariants[sKey].name,
-                }),
-              );
-            }.bind(this),
-          );
+        if (!oGroupAccountModel) {
+          MessageBox.error(this._oBundle.getText("groupAccountModelNotFound"));
+          return;
+        }
 
-          oVM.setInitialSelectionKey("*");
-        },
+        if (!this._oGroupAccVHD) {
+          this._createGroupAccountValueHelp(oMultiInput, oGroupAccountModel);
+        }
 
-        /* =========================================================== */
-        /* CLEAR FILTERS                                               */
-        /* =========================================================== */
-        onClearFilters: function () {
-          var oView = this.getView();
-          oView.byId("idLedgerBox").setValue("GG");
-          oView.byId("idCompanyCodeBox").setValue("LVMH");
-          oView.byId("idGLAccountHierarchy").setValue("");
-          oView.byId("idGroupAccountNumber").removeAllTokens();
-          oView.byId("idPostingDateFrom").setDateValue(null);
-          oView.byId("idPostingDateTo").setDateValue(null);
-          oView.getModel("reportModel").setProperty("/applyEnabled", false);
-        },
+        this._oGroupAccVHD.open();
+        setTimeout(() => this._updateGroupAccountCount(), 0);
+      },
 
-        _getFilters: function () {
-          var oView = this.getView();
-          var sLedger = oView.byId("idLedgerBox").getValue().toUpperCase();
-          var sCompanyCode = oView
-            .byId("idCompanyCodeBox")
-            .getValue()
-            .toUpperCase();
-          var sGLAccountHier = oView
-            .byId("idGLAccountHierarchy")
-            .getValue()
-            .toUpperCase();
-          var dDateFrom = oView.byId("idPostingDateFrom").getDateValue();
-          var dDateTo = oView.byId("idPostingDateTo").getDateValue();
-          var oDateFormat = DateFormat.getDateInstance({
-            pattern: "yyyy-MM-dd",
-          });
-          var sDateFrom = dDateFrom ? oDateFormat.format(dDateFrom) : null;
-          var sDateTo = dDateTo ? oDateFormat.format(dDateTo) : null;
-          var sFiscalPeriod = String(dDateFrom.getMonth() + 1).padStart(2, "0");
-          var sFiscalYear = dDateTo.getFullYear();
-          var aAccountGroup = oView.byId("idGroupAccountNumber").getTokens();
-          var aFilters = [
-            new Filter("Ledger", FilterOperator.EQ, sLedger),
-            new Filter("Companycode", FilterOperator.EQ, sCompanyCode),
-            new Filter("Glaccounthier", FilterOperator.EQ, sGLAccountHier),
-            new Filter("From_postingdate", FilterOperator.GE, sDateFrom),
-            new Filter("To_postingdate", FilterOperator.LE, sDateTo),
-            new Filter("FiscalPeriod", FilterOperator.LE, sFiscalPeriod),
-            new Filter("FiscalYear", FilterOperator.LE, sFiscalYear),
-          ];
+      _createGroupAccountValueHelp: function (oMultiInput, oGroupAccountModel) {
+        const oSearchField = new SearchField({
+          width: "100%",
+          liveChange: (oEvent) => {
+            const sValue = oEvent.getSource().getValue();
+            const oBinding = this._oGroupAccVHD.getTable().getBinding("rows");
+            const aFilters = sValue ? [new Filter("bilkt", FilterOperator.Contains, sValue)] : [];
+            oBinding.filter(aFilters);
+            this._updateGroupAccountCount();
+          },
+        });
 
-          for (var i = 0; i < aAccountGroup.length; i++) {
-            var oToken = aAccountGroup[i];
-            var oFilterData = oToken.data("range");
-            var sCommonOperator = FilterOperator.EQ;
-            if (oFilterData) {
-              if (oFilterData.exclude) {
-                sCommonOperator = FilterOperator.NE;
-              }
-              if (oFilterData.operation === "BT") {
-                aFilters.push(
-                  new Filter(
-                    "CorpgrpacctBefore",
-                    FilterOperator.BT,
-                    oFilterData.value1.toUpperCase(),
-                    oFilterData.value2.toUpperCase(),
-                  ),
-                );
-              } else if (oFilterData.operation === "Empty") {
-                aFilters.push(
-                  new Filter("CorpgrpacctBefore", sCommonOperator, ""),
-                );
-              } else {
-                if (
-                  oFilterData.exclude &&
-                  oFilterData.operation === FilterOperator.EQ
-                ) {
-                  aFilters.push(
-                    new Filter(
-                      "CorpgrpacctBefore",
-                      FilterOperator.NE,
-                      oFilterData.value1.toUpperCase(),
-                    ),
-                  );
-                } else {
-                  aFilters.push(
-                    new Filter(
-                      "CorpgrpacctBefore",
-                      oFilterData.operation,
-                      oFilterData.value1.toUpperCase(),
-                    ),
-                  );
-                }
-              }
-            } else {
-              aFilters.push(
-                new Filter(
-                  "CorpgrpacctBefore",
-                  sCommonOperator,
-                  oToken.getKey().toUpperCase(),
-                ),
-              );
+        const oFilterBar = new FilterBar({
+          advancedMode: false,
+          filterBarExpanded: false,
+          showGoOnFB: false,
+          useToolbar: true,
+        });
+        oFilterBar.setBasicSearch(oSearchField);
+
+        this._oGroupAccVHD = new ValueHelpDialog({
+          title: this._oBundle.getText("groupAccountTitle"),
+          supportMultiselect: true,
+          supportRanges: true,
+          key: "bilkt",
+          descriptionKey: "bilkt",
+          rangeKeyFields: [{ label: this._oBundle.getText("groupAccountNumber"), key: "bilkt", type: "string" }],
+          filterBar: oFilterBar,
+          ok: (oEvent) => {
+            const aTokens = oEvent.getParameter("tokens");
+            this._formatTokensToUpperCase(aTokens);
+            oMultiInput.setTokens(aTokens);
+
+            if (!this._bApplyingVariant) {
+              this.byId("idVariantManagement").currentVariantSetModified(true);
             }
+            this._oGroupAccVHD.close();
+          },
+          cancel: function () { this.close(); },
+          afterClose: () => {
+            this._oGroupAccVHD.destroy();
+            this._oGroupAccVHD = null;
+          },
+        });
+
+        this._oGroupAccVHD.getTableAsync().then((oTable) => {
+          oTable.setModel(oGroupAccountModel);
+          oTable.bindRows("/ZDDL_FI_GROUPACCOUNT");
+          oTable.addColumn(
+            new sap.ui.table.Column({
+              label: new sap.m.Label({ text: this._oBundle.getText("groupAccountNumber") }),
+              template: new sap.m.Text({ text: "{bilkt}" }),
+            })
+          );
+          oTable.getBinding("rows").attachDataReceived(() => this._updateGroupAccountCount());
+        });
+      },
+
+      _updateGroupAccountCount: function () {
+        if (!this._oGroupAccVHD) return;
+        const oBinding = this._oGroupAccVHD.getTable()?.getBinding("rows");
+        if (oBinding) {
+          this._oGroupAccVHD.setTitle(`Group Account (${oBinding.getLength()})`);
+        }
+      },
+
+      onGroupAccountTokenUpdate: function () {
+        if (this._bApplyingVariant) return;
+
+        const aTokens = this.byId("idGroupAccountNumber").getTokens();
+        this._formatTokensToUpperCase(aTokens);
+
+        this.byId("idVariantManagement").currentVariantSetModified(true);
+        this.onFilterChange();
+      },
+
+      _formatTokensToUpperCase: function (aTokens) {
+        aTokens.forEach((oToken) => {
+          if (oToken.getKey()) oToken.setKey(oToken.getKey().toUpperCase());
+          if (oToken.getText()) oToken.setText(oToken.getText().toUpperCase());
+
+          const oRange = oToken.data("range");
+          if (oRange) {
+            if (oRange.value1) oRange.value1 = oRange.value1.toUpperCase();
+            if (oRange.value2) oRange.value2 = oRange.value2.toUpperCase();
+            oToken.data("range", oRange);
+          }
+        });
+      },
+
+      /* =========================================================== */
+      /* APPLY & DATA RETRIEVAL                                      */
+      /* =========================================================== */
+      onApplyFilters: function () {
+        const aFilters = this._getFilters();
+        const sMessage = this._oBundle.getText("successMsginwarning");
+        const sSuccessMessage = this._oBundle.getText("successMsgwithoutwarning");
+
+        BusyIndicator.show(0);
+
+        this.getView().getModel().read("/SyrusSet", {
+          filters: aFilters,
+          success: (oData, oResponse) => {
+            BusyIndicator.hide();
+            this._handleODataResponseMessages(oResponse, sSuccessMessage, sMessage);
+          },
+          error: (oError) => {
+            BusyIndicator.hide();
+            const sErrorMsg = oError.responseText
+              ? JSON.parse(oError.responseText).error.message.value
+              : "Unknown error";
+            MessageBox.error(sErrorMsg);
+          },
+        });
+      },
+
+      _handleODataResponseMessages: function (oResponse, sSuccessMessage, sWarningMessage) {
+        const sSapMessage = oResponse?.headers?.["sap-message"];
+
+        if (!sSapMessage) {
+          MessageBox.success(sSuccessMessage);
+          return;
+        }
+
+        try {
+          const oMsg = JSON.parse(sSapMessage);
+          const sBackendMsg = (oMsg.details && oMsg.details.length > 0)
+            ? oMsg.details.map((d) => d.message).join("\n")
+            : (oMsg.message || "");
+
+          switch (oMsg.severity) {
+            case "error":
+              MessageBox.error(sBackendMsg);
+              break;
+            case "warning":
+              const sFormattedMsg = sBackendMsg
+                ? sBackendMsg.replace(/(\n)?(Unbalanced balance sheet|Bilan déséquilibré)/g, "\n\n$2\n")
+                : "";
+              MessageBox.warning([sWarningMessage, sFormattedMsg, oMsg.message || ""].filter(Boolean).join("\n\n"));
+              break;
+            case "success":
+              MessageBox.success(`${sSuccessMessage}\n\n${sBackendMsg}`);
+              break;
+            default:
+              MessageBox.information(`${sSuccessMessage}\n\n${sBackendMsg}`);
+          }
+        } catch (e) {
+          MessageBox.success(sSuccessMessage);
+        }
+      },
+
+      _getFilters: function () {
+        const sLedger = this.byId("idLedgerBox").getValue().toUpperCase();
+        const sCompanyCode = this.byId("idCompanyCodeBox").getValue().toUpperCase();
+        const sGLAccountHier = this.byId("idGLAccountHierarchy").getValue().toUpperCase();
+        
+        const dDateFrom = this.byId("idPostingDateFrom").getDateValue();
+        const dDateTo = this.byId("idPostingDateTo").getDateValue();
+        
+        const oDateFormat = DateFormat.getDateInstance({ pattern: "yyyy-MM-dd" });
+        const sDateFrom = dDateFrom ? oDateFormat.format(dDateFrom) : null;
+        const sDateTo = dDateTo ? oDateFormat.format(dDateTo) : null;
+        
+        const sFiscalPeriod = String(dDateFrom.getMonth() + 1).padStart(2, "0");
+        const sFiscalYear = dDateTo.getFullYear();
+
+        const aFilters = [
+          new Filter("Ledger", FilterOperator.EQ, sLedger),
+          new Filter("Companycode", FilterOperator.EQ, sCompanyCode),
+          new Filter("Glaccounthier", FilterOperator.EQ, sGLAccountHier),
+          new Filter("From_postingdate", FilterOperator.GE, sDateFrom),
+          new Filter("To_postingdate", FilterOperator.LE, sDateTo),
+          new Filter("FiscalPeriod", FilterOperator.LE, sFiscalPeriod),
+          new Filter("FiscalYear", FilterOperator.LE, sFiscalYear),
+        ];
+
+        const aAccountGroupTokens = this.byId("idGroupAccountNumber").getTokens();
+
+        aAccountGroupTokens.forEach((oToken) => {
+          const oFilterData = oToken.data("range");
+          const sUpperKey = oToken.getKey().toUpperCase();
+
+          if (!oFilterData) {
+            aFilters.push(new Filter("CorpgrpacctBefore", FilterOperator.EQ, sUpperKey));
+            return;
           }
 
-          return aFilters;
-        },
+          const sOperator = oFilterData.exclude ? FilterOperator.NE : FilterOperator.EQ;
+
+          if (oFilterData.operation === "BT") {
+            aFilters.push(new Filter("CorpgrpacctBefore", FilterOperator.BT, oFilterData.value1.toUpperCase(), oFilterData.value2.toUpperCase()));
+          } else if (oFilterData.operation === "Empty") {
+            aFilters.push(new Filter("CorpgrpacctBefore", sOperator, ""));
+          } else {
+            const finalOperator = (oFilterData.exclude && oFilterData.operation === FilterOperator.EQ) 
+              ? FilterOperator.NE 
+              : oFilterData.operation;
+            
+            aFilters.push(new Filter("CorpgrpacctBefore", finalOperator, oFilterData.value1.toUpperCase()));
+          }
+        });
+
+        return aFilters;
       },
-    );
-  },
+
+      /* =========================================================== */
+      /* VARIANT MANAGEMENT & VALIDATION                             */
+      /* =========================================================== */
+      _validatePostingDates: function () {
+        const oDateFromPicker = this.byId("idPostingDateFrom");
+        const oDateToPicker = this.byId("idPostingDateTo");
+        const oApplyButton = this.byId("ApplyButton");
+
+        const dFrom = oDateFromPicker.getDateValue();
+        const dTo = oDateToPicker.getDateValue();
+
+        oDateFromPicker.setValueState("None");
+        oDateToPicker.setValueState("None");
+
+        if (dFrom && dTo && dFrom > dTo) {
+          oDateFromPicker.setValueState("Error").setValueStateText(this._oBundle.getText("dateFromError"));
+          oDateToPicker.setValueState("Error").setValueStateText(this._oBundle.getText("dateToError"));
+          oApplyButton.setEnabled(false);
+          return false;
+        }
+
+        return true;
+      },
+
+      _getUserVariantKey: function () {
+        const oUserInfo = sap.ushell?.Container?.getService("UserInfo");
+        return `SYRUS_VARIANTS_${oUserInfo ? oUserInfo.getId() : "ANONYMOUS"}`;
+      },
+
+      _getCurrentVariantData: function () {
+        return {
+          ledger: this.byId("idLedgerBox").getValue(),
+          companyCode: this.byId("idCompanyCodeBox").getValue(),
+          glHier: this.byId("idGLAccountHierarchy").getValue(),
+          dateFrom: this.byId("idPostingDateFrom").getDateValue(),
+          dateTo: this.byId("idPostingDateTo").getDateValue(),
+          groupAccounts: this.byId("idGroupAccountNumber").getTokens().map((oToken) => ({
+            key: oToken.getKey(),
+            text: oToken.getText(),
+            rangeData: oToken.data("range"),
+          })),
+        };
+      },
+
+      _applyVariantData: function (oData) {
+        this._bApplyingVariant = true;
+
+        this.byId("idLedgerBox").setValue(oData.ledger);
+        this.byId("idCompanyCodeBox").setValue(Array.isArray(oData.companyCode) ? oData.companyCode[0] || "" : oData.companyCode);
+        this.byId("idGLAccountHierarchy").setValue(oData.glHier);
+        this.byId("idPostingDateFrom").setDateValue(oData.dateFrom ? new Date(oData.dateFrom) : null);
+        this.byId("idPostingDateTo").setDateValue(oData.dateTo ? new Date(oData.dateTo) : null);
+
+        const oMultiInput = this.byId("idGroupAccountNumber");
+        oMultiInput.removeAllTokens();
+
+        oData.groupAccounts.forEach((item) => {
+          const oToken = new Token({ key: item.key, text: item.text });
+          if (item.rangeData) oToken.data("range", item.rangeData);
+          oMultiInput.addToken(oToken);
+        });
+
+        this._bApplyingVariant = false;
+        this.byId("idVariantManagement").currentVariantSetModified(false);
+      },
+
+      onSaveVariant: function (oEvent) {
+        const sKey = oEvent.getParameter("key");
+        const sName = oEvent.getParameter("name");
+        const bOverwrite = oEvent.getParameter("overwrite");
+        const sUserKey = this._getUserVariantKey();
+
+        this._mSavedVariants[sKey] = { name: sName, data: this._getCurrentVariantData() };
+
+        localStorage.setItem(sUserKey, JSON.stringify(this._mSavedVariants));
+        localStorage.setItem(`${sUserKey}_last`, sKey);
+
+        const oVM = this.byId("idVariantManagement");
+        if (!bOverwrite) {
+          oVM.addVariantItem(new sap.ui.comp.variants.VariantItem({ key: sKey, text: sName }));
+        }
+
+        oVM.setInitialSelectionKey(sKey);
+        sap.m.MessageToast.show(this._oBundle.getText(bOverwrite ? "variantUpdated" : "variantSaved"));
+        oVM.currentVariantSetModified(false);
+      },
+
+      onSelectVariant: function (oEvent) {
+        const sKey = oEvent.getParameter("key");
+        if (sKey === "*" || !this._mSavedVariants[sKey]) {
+          this._applyStandard();
+          return;
+        }
+        this._applyVariantData(this._mSavedVariants[sKey].data);
+        localStorage.setItem(`${this._getUserVariantKey()}_last`, sKey);
+      },
+
+      onManageVariants: function (oEvent) {
+        const aDeleted = oEvent.getParameter("deleted") || [];
+        const aRenamed = oEvent.getParameter("renamed") || [];
+        const aOverwritten = oEvent.getParameter("overwritten") || [];
+
+        aDeleted.forEach((sKey) => delete this._mSavedVariants[sKey]);
+        aRenamed.forEach((oRename) => { if (this._mSavedVariants[oRename.key]) this._mSavedVariants[oRename.key].name = oRename.name; });
+        aOverwritten.forEach((sKey) => { if (this._mSavedVariants[sKey]) this._mSavedVariants[sKey].data = this._getCurrentVariantData(); });
+
+        localStorage.setItem(this._getUserVariantKey(), JSON.stringify(this._mSavedVariants));
+        this._rebuildVariantItems();
+      },
+
+      _rebuildVariantItems: function () {
+        const oVM = this.byId("idVariantManagement");
+        oVM.removeAllVariantItems();
+
+        Object.keys(this._mSavedVariants).forEach((sKey) => {
+          oVM.addVariantItem(new sap.ui.comp.variants.VariantItem({ key: sKey, text: this._mSavedVariants[sKey].name }));
+        });
+        oVM.setInitialSelectionKey("*");
+      },
+
+      _applyStandard: function () {
+        this._bApplyingVariant = true;
+        const iYear = new Date().getFullYear();
+
+        this.byId("idLedgerBox").setValue("GG");
+        this.byId("idCompanyCodeBox").setValue("LVMH");
+        this.byId("idGLAccountHierarchy").setValue("IFRS");
+        this.byId("idPostingDateFrom").setDateValue(new Date(iYear, 0, 1));
+        this.byId("idPostingDateTo").setDateValue(new Date(iYear, 11, 31));
+        this.byId("idGroupAccountNumber").removeAllTokens();
+
+        this._bApplyingVariant = false;
+        this.byId("idVariantManagement").currentVariantSetModified(false);
+      },
+
+      onClearFilters: function () {
+        this.byId("idLedgerBox").setValue("GG");
+        this.byId("idCompanyCodeBox").setValue("LVMH");
+        this.byId("idGLAccountHierarchy").setValue("");
+        this.byId("idGroupAccountNumber").removeAllTokens();
+        this.byId("idPostingDateFrom").setDateValue(null);
+        this.byId("idPostingDateTo").setDateValue(null);
+        this.getView().getModel("reportModel").setProperty("/applyEnabled", false);
+      }
+    });
+  }
 );
