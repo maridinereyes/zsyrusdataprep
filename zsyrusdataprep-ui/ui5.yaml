@@ -31,6 +31,10 @@ server:
             authenticationType: BasicAuthentication
             destination: S4HANA_OnPrem_200
             path: /sap/opu/odata/sap/ZCSM_USER/
+          - url: http://da1:443
+            client: '200'
+            destination: S4HANA_OnPrem_200
+            path: /sap/opu/odata/sap/ZIAG_USER/
     - name: fiori-tools-appreload
       afterMiddleware: compression
       configuration:

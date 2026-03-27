@@ -60,6 +60,24 @@
           "localUri": "localService/ZCSM_USER/metadata.xml",
           "odataVersion": "2.0"
         }
+      },
+      "ZIAG_USER_VAN": {
+        "uri": "/sap/opu/odata/IWFND/CATALOGSERVICE;v=2/Annotations(TechnicalName='ZIAG_USER_VAN',Version='0001')/$value/",
+        "type": "ODataAnnotation",
+        "settings": {
+          "localUri": "localService/ZIAG_USER/ZIAG_USER_VAN.xml"
+        }
+      },
+      "ZIAG_USER": {
+        "uri": "/sap/opu/odata/sap/ZIAG_USER/",
+        "type": "OData",
+        "settings": {
+          "annotations": [
+            "ZIAG_USER_VAN"
+          ],
+          "localUri": "localService/ZIAG_USER/metadata.xml",
+          "odataVersion": "2.0"
+        }
       }
     },
     "crossNavigation": {
@@ -125,6 +143,11 @@
       },
       "ZCSM_USER": {
         "dataSource": "ZCSM_USER",
+        "preload": true,
+        "settings": {}
+      },
+      "ZIAG_USER": {
+        "dataSource": "ZIAG_USER",
         "preload": true,
         "settings": {}
       }
