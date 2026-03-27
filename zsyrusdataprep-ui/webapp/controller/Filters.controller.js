@@ -41,6 +41,26 @@ sap.ui.define(
           var oModel = new JSONModel({ applyEnabled: false });
           this.getView().setModel(oModel, "reportModel");
 
+          
+         var aCompanyCodes = [
+            { Code: "0000" }, { Code: "ALDE" }, { Code: "ANEM" }, { Code: "CAMB" }, { Code: "CAPI" },
+            { Code: "DAPE" }, { Code: "DARP" }, { Code: "DELP" }, { Code: "DELT" }, { Code: "ENAB" },
+            { Code: "EUPA" }, { Code: "EUTR" }, { Code: "FLAV" }, { Code: "HALV" }, { Code: "IMEX" },
+            { Code: "LBDH" }, { Code: "LCIN" }, { Code: "LCOR" }, { Code: "LGTF" }, { Code: "LINV" },
+            { Code: "LLVA" }, { Code: "LLVS" }, { Code: "LMHF" }, { Code: "LMHS" }, { Code: "LVFP" },
+            { Code: "LVHF" }, { Code: "LVMH" }, { Code: "LVMS" }, { Code: "MHIL" }, { Code: "MHIV" },
+            { Code: "MHSA" }, { Code: "MHWS" }, { Code: "MOJG" }, { Code: "MONG" }, { Code: "OMEG" },
+            { Code: "PCIN" }, { Code: "PRIM" }, { Code: "PROB" }, { Code: "PROL" }, { Code: "PSTO" },
+            { Code: "RAVE" }, { Code: "S116" }, { Code: "S125" }, { Code: "S127" }, { Code: "S132" },
+            { Code: "S135" }, { Code: "S136" }, { Code: "S137" }, { Code: "S138" }, { Code: "S139" },
+            { Code: "S141" }, { Code: "S159" }, { Code: "S160" }, { Code: "S161" }, { Code: "S162" },
+            { Code: "S163" }, { Code: "S164" }, { Code: "S165" }, { Code: "S166" }, { Code: "S167" },
+            { Code: "SABI" }, { Code: "SAMA" }, { Code: "SHAN" }, { Code: "SOFK" }, { Code: "UFIN" },
+            { Code: "UFPA" }, { Code: "WHIN" }
+          ];
+          var oCompanyCodeModel = new JSONModel(aCompanyCodes);
+          this.getView().setModel(oCompanyCodeModel, "LocalCompanyCodes");
+
           var oView = this.getView();
           var iYear = new Date().getFullYear();
 
@@ -71,7 +91,7 @@ sap.ui.define(
 
         /* =========================================================== */
         /* FILTER CHANGE                                               */
-        /* =========================================================== */
+        /* =============================================.============== */
         onFilterChange: function () {
           if (this._bApplyingVariant) {
             return;

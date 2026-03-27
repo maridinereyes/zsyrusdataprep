@@ -60,7 +60,7 @@
                     />
 
                     <!-- Company Code -->
-                    <Label
+                   <Label
                         text="{i18n>companyCodeLabel}"
                         required="true"
                         class="sapUiSmallMarginTop"
@@ -70,15 +70,13 @@
                         id="idCompanyCodeBox"
                         width="15rem"
                         selectedKey="{viewModel>/companyCode}"
-                        items="{
-        path: 'ZCSM_USER>/ZCSM_C_CompanyCodeVH'
-    }"
+                        items="{LocalCompanyCodes>/}"
                         selectionChange="onFilterChange"
                         change="onCompanyCodeChange"
                     >
                         <core:Item
-                            key="{ZCSM_USER>CompanyCode}"
-                            text="{ZCSM_USER>CompanyCode}"
+                            key="{LocalCompanyCodes>Code}"
+                            text="{LocalCompanyCodes>Code}"
                         />
                     </ComboBox>
 
