@@ -51,7 +51,7 @@ sap.ui.define(
           oView.getModel("reportModel").setProperty("/applyEnabled", true);
 
           /* ===============================
-         VARIANT RESTORE (ADD THIS)
+         VARIANT RESTORE 
       =============================== */
           var sUserKey = this._getUserVariantKey();
           this._mSavedVariants = JSON.parse(
@@ -513,7 +513,6 @@ sap.ui.define(
           oView.byId("idLedgerBox").setValue(oData.ledger);
           var sCompanyCode = oData.companyCode;
 
-          // DROP EXTRA VALUES IF ARRAY
           if (Array.isArray(sCompanyCode)) {
             sCompanyCode = sCompanyCode[0] || "";
           }

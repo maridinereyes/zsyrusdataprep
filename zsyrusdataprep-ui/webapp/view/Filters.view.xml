@@ -71,14 +71,14 @@
                         width="15rem"
                         selectedKey="{viewModel>/companyCode}"
                         items="{
-        path: 'ZCSM_USER>/ZCSM_C_CompanyCodeVH'
+        path: 'ZIAG_USER>/ZDDL_IAG_C_COMPANYCODEVH'
     }"
                         selectionChange="onFilterChange"
                         change="onCompanyCodeChange"
                     >
                         <core:Item
-                            key="{ZCSM_USER>CompanyCode}"
-                            text="{ZCSM_USER>CompanyCode}"
+                            key="{ZIAG_USER>CompanyCode}"
+                            text="{ZIAG_USER>CompanyCode}"
                         />
                     </ComboBox>
 
